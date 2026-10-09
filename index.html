@@ -32,13 +32,11 @@ a.ph small{margin-top:6px;font-weight:bold}
 .photo:not(.aphoto) .galerie{display:none}
 .galerie{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:200px;scrollbar-width:none}
 .galerie::-webkit-scrollbar{display:none}
-.galerie a{flex:0 0 100%;scroll-snap-align:start;display:none;height:200px}
-.galerie a.ok{display:flex;align-items:center;justify-content:center}
-.galerie img{max-width:100%;max-height:200px;object-fit:contain}
-.galerie a.plus{flex-direction:column;background:#fafafa;color:#2a75bb;text-decoration:none;font-weight:bold}
-.galerie a.plus span{font-size:50px}
-.fl{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:none;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:26px;line-height:38px;padding:0;cursor:pointer;z-index:5;display:none}
-.fl.g{left:6px}.fl.d{right:6px}
+.galerie .sl{flex:0 0 100%;scroll-snap-align:start;height:200px;display:flex;align-items:center;justify-content:center}
+.galerie img{max-width:100%;max-height:200px;object-fit:contain;pointer-events:none;user-select:none}
+.fl{position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;padding:0 4px;font-size:24px;font-weight:bold;color:#333;text-shadow:0 0 3px #fff,0 0 3px #fff;cursor:pointer;z-index:5;display:none}
+.fl:hover{color:#e3350d}
+.fl.g{left:2px}.fl.d{right:2px}
 .photo.multi .fl{display:block}
 .badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .b{font-size:11px;font-weight:bold;padding:3px 7px;border-radius:10px;background:#eee}
@@ -166,35 +164,42 @@ function passe(p){return jours(p.fin||p.date)<0}
 function dateTxt(p){return p.dateTxt||new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
 const enc=encodeURIComponent;
 
-/* ---------- Photos ---------- */
-function photo(p){
-  let s="";
-  ["","-2","-3","-4"].forEach(x=>{
-    s+=`<a target="_blank"><img src="${p.id}${x}.jpg" data-b="${p.id}${x}" data-e="0" onload="imgOk(this)" onerror="imgErr(this)" alt=""></a>`;
+/* ---------- Photos (sans limite) ---------- */
+const PH={};
+function trouver(id){
+  if(PH[id])return PH[id];
+  PH[id]=new Promise(ok=>{
+    const E=["jpg","png","webp","jpeg"],l=[];
+    function essai(k,e){
+      const nom=id+(k==1?"":"-"+k)+"."+E[e];
+      const im=new Image();
+      im.onload=()=>{l.push(nom);essai(k+1,0)};
+      im.onerror=()=>{if(e+1<E.length)essai(k,e+1);else ok(l)};
+      im.src=nom;
+    }
+    essai(1,0);
   });
+  return PH[id];
+}
+function photo(p){
   const g="https://www.google.com/search?tbm=isch&q="+enc(p.recherche);
-  return `<div class="photo">
+  return `<div class="photo" data-id="${p.id}">
     <a class="ph" target="_blank" href="${g}"><span>${EMOJI[p.type]}</span><small>👆 Voir à quoi ça ressemble</small></a>
-    <div class="galerie">${s}<a class="ok plus" target="_blank" href="${g}"><span>🔍</span>Voir d'autres photos</a></div>
-    <button type="button" class="fl g" onclick="fleche(this,-1)">‹</button>
-    <button type="button" class="fl d" onclick="fleche(this,1)">›</button>
+    <div class="galerie"></div>
+    <button type="button" class="fl g" onclick="fleche(this,-1)">❮</button>
+    <button type="button" class="fl d" onclick="fleche(this,1)">❯</button>
   </div>`;
 }
-function imgOk(el){el.parentNode.classList.add("ok");el.parentNode.href=el.src;majPhoto(el.closest(".photo"))}
-function imgErr(el){
-  const E=["jpg","png","webp","jpeg"];let e=+el.dataset.e+1;
-  if(e<E.length){el.dataset.e=e;el.src=el.dataset.b+"."+E[e]}
-  else{const box=el.closest(".photo");el.parentNode.remove();if(box)majPhoto(box)}
-}
-function majPhoto(box){
-  if(!box)return;
-  const n=box.querySelectorAll(".galerie a.ok:not(.plus)").length;
-  box.classList.toggle("aphoto",n>0);
-  box.classList.toggle("multi",n>0);
+function remplir(box){
+  trouver(box.dataset.id).then(l=>{
+    box.querySelector(".galerie").innerHTML=l.map(s=>`<div class="sl"><img src="${s}" alt="" draggable="false"></div>`).join("");
+    box.classList.toggle("aphoto",l.length>0);
+    box.classList.toggle("multi",l.length>1);
+  });
 }
 function fleche(b,d){
   const g=b.parentNode.querySelector(".galerie");
-  const n=g.querySelectorAll("a.ok").length;if(n<2)return;
+  const n=g.querySelectorAll(".sl").length;if(n<2)return;
   const w=g.clientWidth;let i=Math.round(g.scrollLeft/w);
   i=(i+d+n)%n;
   g.scrollTo({left:i*w,behavior:"smooth"});
@@ -276,6 +281,7 @@ function rendre(){
     c.innerHTML='<div id="zoneCompte" class="vide">Chargement…</div>';
     if(window.afficherCompte)window.afficherCompte();
   }
+  document.querySelectorAll(".photo[data-id]").forEach(remplir);
 }
 
 /* ---------- Démarrage ---------- */
