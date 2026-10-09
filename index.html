@@ -35,6 +35,8 @@ a.ph small{margin-top:6px;font-weight:bold}
 .galerie a{flex:0 0 100%;scroll-snap-align:start;display:none;height:200px}
 .galerie a.ok{display:flex;align-items:center;justify-content:center}
 .galerie img{max-width:100%;max-height:200px;object-fit:contain}
+.galerie a.plus{flex-direction:column;background:#fafafa;color:#2a75bb;text-decoration:none;font-weight:bold}
+.galerie a.plus span{font-size:50px}
 .fl{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:none;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:26px;line-height:38px;padding:0;cursor:pointer;z-index:5;display:none}
 .fl.g{left:6px}.fl.d{right:6px}
 .photo.multi .fl{display:block}
@@ -170,9 +172,10 @@ function photo(p){
   ["","-2","-3","-4"].forEach(x=>{
     s+=`<a target="_blank"><img src="${p.id}${x}.jpg" data-b="${p.id}${x}" data-e="0" onload="imgOk(this)" onerror="imgErr(this)" alt=""></a>`;
   });
+  const g="https://www.google.com/search?tbm=isch&q="+enc(p.recherche);
   return `<div class="photo">
-    <a class="ph" target="_blank" href="https://www.google.com/search?tbm=isch&q=${enc(p.recherche)}"><span>${EMOJI[p.type]}</span><small>👆 Voir à quoi ça ressemble</small></a>
-    <div class="galerie">${s}</div>
+    <a class="ph" target="_blank" href="${g}"><span>${EMOJI[p.type]}</span><small>👆 Voir à quoi ça ressemble</small></a>
+    <div class="galerie">${s}<a class="ok plus" target="_blank" href="${g}"><span>🔍</span>Voir d'autres photos</a></div>
     <button type="button" class="fl g" onclick="fleche(this,-1)">‹</button>
     <button type="button" class="fl d" onclick="fleche(this,1)">›</button>
   </div>`;
@@ -185,9 +188,9 @@ function imgErr(el){
 }
 function majPhoto(box){
   if(!box)return;
-  const n=box.querySelectorAll(".galerie a.ok").length;
+  const n=box.querySelectorAll(".galerie a.ok:not(.plus)").length;
   box.classList.toggle("aphoto",n>0);
-  box.classList.toggle("multi",n>1);
+  box.classList.toggle("multi",n>0);
 }
 function fleche(b,d){
   const g=b.parentNode.querySelector(".galerie");
