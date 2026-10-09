@@ -26,13 +26,25 @@
   main{max-width:1200px;margin:0 auto;padding:0 1rem 3rem}
   h2.mois{margin:1.8rem 0 .8rem;color:var(--fonce);border-left:6px solid var(--jaune);padding-left:.6rem;text-transform:capitalize}
   h2.nouv{border-left-color:var(--rouge)}
+  h2.tout{border-left-color:var(--fonce)}
   .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
   .item{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px #0001;display:flex;flex-direction:column;border-top:5px solid var(--bleu)}
   .item.Extension{border-top-color:var(--rouge)} .item.Deck{border-top-color:var(--vert)}
   .item.Événement{border-top-color:var(--orange)} .item.Rumeur{border-top-color:#9ca3af}
-  .photo{position:relative;height:190px;background:linear-gradient(135deg,#eef2ff,#fff7d6);display:flex;align-items:center;justify-content:center}
-  .photo .ph{font-size:4rem;opacity:.6}
-  .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:.5rem}
+
+  /* ----- Photos (plusieurs par produit) ----- */
+  .photo{position:relative;height:200px;overflow:hidden;background:linear-gradient(135deg,#eef2ff,#fff7d6)}
+  .photo a.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;text-decoration:none;color:var(--fonce)}
+  .photo a.ph span{font-size:4rem;opacity:.6;line-height:1}
+  .photo a.ph small{font-weight:700;font-size:.85rem;background:#fff;padding:.3rem .7rem;border-radius:999px;box-shadow:0 1px 3px #0002}
+  .galerie{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;z-index:1}
+  .galerie::-webkit-scrollbar{display:none}
+  .galerie a{flex:0 0 100%;height:100%;position:relative;scroll-snap-align:center}
+  .galerie img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:.5rem}
+  .points{position:absolute;bottom:.4rem;left:0;right:0;display:flex;justify-content:center;gap:.4rem;z-index:3}
+  .points i{width:10px;height:10px;border-radius:50%;background:#0003;cursor:pointer}
+  .points i.on{background:var(--fonce)}
+
   .corps{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem;flex:1}
   .item h3{font-size:1.05rem;color:var(--fonce)}
   .meta{display:flex;flex-wrap:wrap;gap:.4rem;font-size:.8rem}
@@ -46,9 +58,10 @@
   details summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--bleu)}
   .magasins{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.5rem}
   .magasins a{font-size:.8rem;text-decoration:none;padding:.35rem .65rem;border-radius:8px;background:#f3f4f6;color:#111;border:1px solid #e5e7eb}
-  .actions{display:flex;gap:.5rem;margin-top:auto}
-  .actions button{flex:1;border:none;padding:.6rem;border-radius:10px;cursor:pointer;font-weight:600;font-size:.85rem}
-  .btn-cal{background:var(--fonce);color:#fff} .btn-fav{background:#f3f4f6} .btn-fav.on{background:var(--jaune)}
+  .actions{display:flex;gap:.4rem;margin-top:auto}
+  .actions button,.actions a{flex:1;border:none;padding:.6rem .3rem;border-radius:10px;cursor:pointer;font-weight:600;font-size:.82rem;text-align:center;text-decoration:none}
+  .btn-cal{background:var(--fonce);color:#fff} .btn-photo{background:var(--bleu);color:#fff}
+  .btn-fav{background:#f3f4f6;color:#111} .btn-fav.on{background:var(--jaune)}
   .table-mag{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #0001}
   .table-mag th,.table-mag td{padding:.7rem;text-align:left;border-bottom:1px solid #eee;font-size:.88rem;vertical-align:top}
   .table-mag th{background:var(--fonce);color:#fff}
@@ -111,7 +124,7 @@
 /* ============ 1. RÉGLAGES ============ */
 const MISE_A_JOUR = "9 octobre 2026";
 
-/* COMPTES : colle ici la config Firebase (voir guide). Laisse vide = pas de comptes. */
+/* COMPTES : colle ici la config Firebase. Laisse vide = pas de comptes. */
 var FIREBASE_CONFIG = {
 };
 
@@ -137,32 +150,33 @@ const DISPLAYS=["boutiques","philibert","ultrajeux","fnac","cultura","micromania
 const PREMIUM=["fnac","cultura","micromania","amazon","pokemoncenter","philibert","ultrajeux","boutiques"];
 
 /* ============ 3. PRODUITS ============
-   ajout : date où le produit a été ajouté au site (pour la section Nouveautés)
+   ajout : date d'ajout au site (badge NOUVEAU pendant 14 jours)
    prix : prix conseillé (null = non communiqué) ; prixTbc:true = à confirmer
-   PHOTO : envoie sur GitHub une image nommée comme l'id (ex : me06-etb.jpg) */
+   recherche : texte utilisé pour le bouton Photos et par le robot
+   PHOTOS : jusqu'à 4 par produit sur GitHub → id.jpg, id-2.jpg, id-3.jpg, id-4.jpg */
 const PRODUITS = [
-  {id:"pokebox30",nom:"Boîtes 30ᵉ Anniversaire Amphinobi-ex / Nymphali-ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-16",prix:"25,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"4 boosters + 1 carte promo. 2 versions.",magasins:GRAND_PUBLIC},
-  {id:"classeur30",nom:"Collection Classeur 30ᵉ Anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-23",prix:"45,99 €",prixTbc:true,statut:"À confirmer",ajout:"2026-10-08",desc:"Classeur + 5 boosters. ⚠️ Certains sites l'annoncent au 4 décembre.",magasins:GRAND_PUBLIC},
-  {id:"avp-me06",nom:"Avant-premières Règne Delta (Coffret Stratégies et Combats)",serie:"ME06 – Règne Delta",type:"Événement",date:"2026-10-24",fin:"2026-11-01",dateTexte:"du 24 oct. au 1ᵉʳ nov. 2026",prix:"≈ 30 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Tournois en boutiques participantes pour jouer les cartes ME06 avant la sortie.",magasins:["boutiques"]},
-  {id:"deck-mentali",nom:"Deck Combat 30ᵉ Anniversaire – Mentali-ex",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
-  {id:"deck-noctali",nom:"Deck Combat 30ᵉ Anniversaire – Noctali-ex",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
-  {id:"creation-deck",nom:"Collection Création de deck",serie:"Hors extension",type:"Deck",date:"2026-10-31",dateTexte:"Fin octobre 2026 (à confirmer)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"40 cartes pour construire son premier deck, dont un Miaouss-ex brillant, + 1 booster.",magasins:GRAND_PUBLIC},
-  {id:"me06-booster",nom:"Booster Règne Delta (ME06)",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"5,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"10 cartes par booster. Extension menée par Méga-Rayquaza-ex.",magasins:GRAND_PUBLIC},
-  {id:"me06-tripack",nom:"Tripack Règne Delta (promo Otaria)",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"17,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"3 boosters + 1 carte promo brillante Otaria.",magasins:GRAND_PUBLIC},
-  {id:"me06-bundle",nom:"Bundle 6 boosters Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"35,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"6 boosters de l'extension.",magasins:GRAND_PUBLIC},
-  {id:"me06-etb",nom:"Coffret Dresseur d'Élite (ETB) Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"55,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"9 boosters, promo Kyogre Illustration Rare, 65 protège-cartes Méga-Rayquaza, accessoires.",magasins:GRAND_PUBLIC},
-  {id:"me06-demi",nom:"Demi-display 18 boosters Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"107,82 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"18 boosters.",magasins:DISPLAYS},
-  {id:"me06-display",nom:"Display 36 boosters Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"215,64 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"36 boosters, le format pour ouvrir en volume.",magasins:DISPLAYS},
-  {id:"me06-blisters",nom:"Blisters Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:null,statut:"Confirmé",ajout:"2026-10-08",desc:"Blisters vendus en caisse.",magasins:GRAND_PUBLIC},
-  {id:"upc-journee",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Journée (Mentali-ex)",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Mentali-ex, tapis, accessoires.",magasins:PREMIUM},
-  {id:"upc-soiree",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Soirée (Noctali-ex)",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Noctali-ex, tapis, accessoires.",magasins:PREMIUM},
-  {id:"metamorph",nom:"Collection Premium Métamorph 30ᵉ Anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"49,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"8 boosters, carte promo Métamorph, présentoir.",magasins:GRAND_PUBLIC},
-  {id:"figurines",nom:"Collections avec figurine Mew / Mewtwo",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"37,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"2 versions, avec boosters et figurine.",magasins:GRAND_PUBLIC},
-  {id:"autocollant-lucario",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Lucario",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
-  {id:"autocollant-noadkoko",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Noadkoko d'Alola",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
-  {id:"ligue-amphinobi",nom:"Deck de Ligue de Combat Méga-Amphinobi-ex",serie:"Méga-Évolution",type:"Deck",date:"2026-11-13",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Deck compétitif prêt à jouer.",magasins:GRAND_PUBLIC},
-  {id:"vague30-dec",nom:"Dernière vague 30ᵉ Anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-12-04",prix:null,statut:"À confirmer",ajout:"2026-10-09",desc:"Dernière vague de produits des 30 ans. Produits pas encore détaillés.",magasins:GRAND_PUBLIC},
-  {id:"ex-star",nom:"Nouvelle série « Pokémon ex★ »",serie:"Après Méga-Évolution",type:"Rumeur",date:"2027-04-01",dateTexte:"Printemps 2027 (non officiel)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Prochaine ère du JCC teasée aux Championnats du Monde 2026. Pas de date officielle en France.",magasins:[]}
+  {id:"pokebox30",nom:"Boîtes 30ᵉ Anniversaire Amphinobi-ex / Nymphali-ex",recherche:"Pokemon 30th anniversary tin Greninja ex Sylveon ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-16",prix:"25,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"4 boosters + 1 carte promo. 2 versions.",magasins:GRAND_PUBLIC},
+  {id:"classeur30",nom:"Collection Classeur 30ᵉ Anniversaire",recherche:"Pokémon collection classeur 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-23",prix:"45,99 €",prixTbc:true,statut:"À confirmer",ajout:"2026-10-08",desc:"Classeur + 5 boosters. ⚠️ Certains sites l'annoncent au 4 décembre.",magasins:GRAND_PUBLIC},
+  {id:"avp-me06",nom:"Avant-premières Règne Delta (Coffret Stratégies et Combats)",recherche:"Pokémon Règne Delta avant-première coffret",serie:"ME06 – Règne Delta",type:"Événement",date:"2026-10-24",fin:"2026-11-01",dateTexte:"du 24 oct. au 1ᵉʳ nov. 2026",prix:"≈ 30 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Tournois en boutiques participantes pour jouer les cartes ME06 avant la sortie.",magasins:["boutiques"]},
+  {id:"deck-mentali",nom:"Deck Combat 30ᵉ Anniversaire – Mentali-ex",recherche:"Pokémon deck combat Mentali-ex 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
+  {id:"deck-noctali",nom:"Deck Combat 30ᵉ Anniversaire – Noctali-ex",recherche:"Pokémon deck combat Noctali-ex 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
+  {id:"creation-deck",nom:"Collection Création de deck",recherche:"Pokémon collection création de deck Miaouss-ex",serie:"Hors extension",type:"Deck",date:"2026-10-31",dateTexte:"Fin octobre 2026 (à confirmer)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"40 cartes pour construire son premier deck, dont un Miaouss-ex brillant, + 1 booster.",magasins:GRAND_PUBLIC},
+  {id:"me06-booster",nom:"Booster Règne Delta (ME06)",recherche:"Pokémon Règne Delta booster pochette 10 cartes",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"5,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"10 cartes par booster. Extension menée par Méga-Rayquaza-ex.",magasins:GRAND_PUBLIC},
+  {id:"me06-tripack",nom:"Tripack Règne Delta (promo Otaria)",recherche:"tripack Pokémon Règne Delta Otaria",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"17,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"3 boosters + 1 carte promo brillante Otaria.",magasins:GRAND_PUBLIC},
+  {id:"me06-bundle",nom:"Bundle 6 boosters Règne Delta",recherche:"bundle 6 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"35,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"6 boosters de l'extension.",magasins:GRAND_PUBLIC},
+  {id:"me06-etb",nom:"Coffret Dresseur d'Élite (ETB) Règne Delta",recherche:"coffret dresseur d'élite Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"55,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"9 boosters, promo Kyogre Illustration Rare, 65 protège-cartes Méga-Rayquaza, accessoires.",magasins:GRAND_PUBLIC},
+  {id:"me06-demi",nom:"Demi-display 18 boosters Règne Delta",recherche:"demi display 18 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"107,82 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"18 boosters.",magasins:DISPLAYS},
+  {id:"me06-display",nom:"Display 36 boosters Règne Delta",recherche:"display 36 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"215,64 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"36 boosters, le format pour ouvrir en volume.",magasins:DISPLAYS},
+  {id:"me06-blisters",nom:"Blisters Règne Delta",recherche:"blister Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:null,statut:"Confirmé",ajout:"2026-10-08",desc:"Blisters vendus en caisse.",magasins:GRAND_PUBLIC},
+  {id:"upc-journee",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Journée (Mentali-ex)",recherche:"Pokémon collection ultra premium 30e anniversaire Mentali-ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Mentali-ex, tapis, accessoires.",magasins:PREMIUM},
+  {id:"upc-soiree",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Soirée (Noctali-ex)",recherche:"Pokémon collection ultra premium 30e anniversaire Noctali-ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Noctali-ex, tapis, accessoires.",magasins:PREMIUM},
+  {id:"metamorph",nom:"Collection Premium Métamorph 30ᵉ Anniversaire",recherche:"Pokémon collection premium Métamorph 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"49,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"8 boosters, carte promo Métamorph, présentoir.",magasins:GRAND_PUBLIC},
+  {id:"figurines",nom:"Collections avec figurine Mew / Mewtwo",recherche:"Pokémon collection figurine Mew Mewtwo 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"37,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"2 versions, avec boosters et figurine.",magasins:GRAND_PUBLIC},
+  {id:"autocollant-lucario",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Lucario",recherche:"Pokémon collection autocollant 30e anniversaire Lucario",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
+  {id:"autocollant-noadkoko",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Noadkoko d'Alola",recherche:"Pokémon coffret collection autocollant Noadkoko d'Alola 30e anniversaire boîte",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
+  {id:"ligue-amphinobi",nom:"Deck de Ligue de Combat Méga-Amphinobi-ex",recherche:"Pokémon deck de ligue Méga-Amphinobi-ex",serie:"Méga-Évolution",type:"Deck",date:"2026-11-13",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Deck compétitif prêt à jouer.",magasins:GRAND_PUBLIC},
+  {id:"vague30-dec",nom:"Dernière vague 30ᵉ Anniversaire",recherche:"Pokémon 30e anniversaire produits décembre 2026",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-12-04",prix:null,statut:"À confirmer",ajout:"2026-10-09",desc:"Dernière vague de produits des 30 ans. Produits pas encore détaillés.",magasins:GRAND_PUBLIC},
+  {id:"ex-star",nom:"Nouvelle série « Pokémon ex★ »",recherche:"Pokémon JCC ex star 2027",serie:"Après Méga-Évolution",type:"Rumeur",date:"2027-04-01",dateTexte:"Printemps 2027 (non officiel)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Prochaine ère du JCC teasée aux Championnats du Monde 2026. Pas de date officielle en France.",magasins:[]}
 ];
 
 /* ============ 4. FONCTIONNEMENT (pas besoin de modifier) ============ */
@@ -175,20 +189,42 @@ let utilisateur=null;
 const $=s=>document.querySelector(s);
 const EMOJI={Extension:"🎴",Coffret:"🎁",Deck:"🃏","Événement":"🏆",Rumeur:"❓"};
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const chrono=(a,b)=>a.date.localeCompare(b.date)||a.nom.localeCompare(b.nom);
 
 function jours(d){return Math.round((new Date(d+"T00:00:00")-AUJ)/86400000);}
 function estNouveau(p){return p.ajout&&jours(p.ajout)>=-14&&jours(p.fin||p.date)>=0;}
 function fmtDate(p){return p.dateTexte||new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});}
 function lienMagasin(id,p){const m=MAGASINS[id];if(m.url)return m.url;
   return "https://www.google.com/search?q="+encodeURIComponent(`site:${m.domaine} pokemon ${p.nom}`);}
+function lienPhotos(p){return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(p.recherche||("Pokémon "+p.nom));}
 
+/* ----- Photos : id.jpg, id-2.jpg, id-3.jpg, id-4.jpg ----- */
 function photo(p){
-  const essais=p.image?[p.image]:["jpg","png","jpeg","webp","JPG","PNG","JPEG"].map(e=>`${p.id}.${e}`);
-  return `<div class="photo"><span class="ph">${EMOJI[p.type]||"🎴"}</span>
-    <img src="${essais[0]}" data-reste="${essais.slice(1).join("|")}" alt="${esc(p.nom)}" loading="lazy" onerror="imgErr(this)"></div>`;
+  const lien=lienPhotos(p);
+  const noms=p.images||(p.image?[p.image]:[p.id,p.id+"-2",p.id+"-3",p.id+"-4"]);
+  const slides=noms.map(b=>{
+    const essais=/^http|\.(jpe?g|png|webp)$/i.test(b)?[b]:["jpg","png","webp","jpeg"].map(e=>b+"."+e);
+    return `<a href="${lien}" target="_blank" rel="noopener"><img src="${esc(essais[0])}" data-reste="${esc(essais.slice(1).join("|"))}" alt="${esc(p.nom)}" loading="lazy" onerror="imgErr(this)"></a>`;
+  }).join("");
+  return `<div class="photo">
+    <a class="ph" href="${lien}" target="_blank" rel="noopener"><span>${EMOJI[p.type]||"🎴"}</span><small>👆 Voir à quoi ça ressemble</small></a>
+    <div class="galerie" onscroll="majPoints(this)">${slides}</div><div class="points"></div></div>`;
 }
-function imgErr(el){const r=el.dataset.reste?el.dataset.reste.split("|"):[];
-  if(r.length){el.src=r.shift();el.dataset.reste=r.join("|");}else el.remove();}
+function imgErr(el){
+  const r=el.dataset.reste?el.dataset.reste.split("|"):[];
+  if(r.length){el.src=r.shift();el.dataset.reste=r.join("|");return;}
+  const g=el.closest(".galerie");(el.closest("a")||el).remove();
+  if(g){if(!g.children.length)g.remove();else majPoints(g);}
+}
+function majPoints(g){
+  const pts=g.parentNode&&g.parentNode.querySelector(".points");if(!pts)return;
+  const n=g.children.length;if(n<2){pts.innerHTML="";return;}
+  const i=Math.round(g.scrollLeft/g.clientWidth);
+  pts.innerHTML=Array.from({length:n},(_,k)=>`<i class="${k===i?"on":""}" onclick="allerA(this,${k})"></i>`).join("");
+}
+function allerA(pt,k){const g=pt.parentNode.previousElementSibling;g.scrollTo({left:k*g.clientWidth,behavior:"smooth"});}
+document.addEventListener("load",e=>{const g=e.target.closest&&e.target.closest(".galerie");if(g)majPoints(g);},true);
+
 function prixHtml(p){
   if(!p.prix)return `<div class="prix nc">Prix conseillé non communiqué</div>`;
   return `<div class="prix">${p.prix}<small>Prix conseillé${p.prixTbc?" · à confirmer":""}</small></div>`;
@@ -207,6 +243,7 @@ function carte(p){
     <p class="desc">${p.desc}</p>
     ${p.magasins.length?`<details><summary>🏬 Où l'acheter (${p.magasins.length})</summary><div class="magasins">${mags}</div></details>`:""}
     <div class="actions">
+      <a class="btn-photo" href="${lienPhotos(p)}" target="_blank" rel="noopener">🖼️ Photos</a>
       <button class="btn-cal" onclick="ics('${p.id}')">📆 Agenda</button>
       <button class="btn-fav ${fav.has(p.id)?"on":""}" onclick="toggleFav('${p.id}')">${fav.has(p.id)?"⭐ Suivi":"☆ Suivre"}</button>
     </div></div></article>`;
@@ -215,20 +252,20 @@ function filtresActifs(){return $("#recherche").value.trim()||$("#filtreType").v
 function filtrer(l){
   const q=$("#recherche").value.toLowerCase().trim(),t=$("#filtreType").value,m=$("#filtreMagasin").value,passes=$("#voirPasses").checked;
   return l.filter(p=>(passes||jours(p.fin||p.date)>=0)&&(!t||p.type===t)&&(!m||p.magasins.includes(m))&&
-    (!q||(p.nom+" "+p.serie+" "+p.desc).toLowerCase().includes(q))).sort((a,b)=>a.date.localeCompare(b.date));
+    (!q||(p.nom+" "+p.serie+" "+p.desc).toLowerCase().includes(q))).sort(chrono);
 }
 function parMois(l){
   if(!l.length)return `<p class="vide">Aucune sortie ne correspond.</p>`;
-  const g={};l.forEach(p=>{const k=p.type==="Rumeur"?"Plus tard":new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"});(g[k]||=[]).push(p);});
+  const g={};[...l].sort(chrono).forEach(p=>{const k=p.type==="Rumeur"?"Plus tard":new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"});(g[k]||=[]).push(p);});
   return Object.entries(g).map(([k,i])=>`<h2 class="mois">${k}</h2><div class="grille">${i.map(carte).join("")}</div>`).join("");
 }
 function rendre(){
-  const nouveaux=PRODUITS.filter(estNouveau).sort((a,b)=>b.ajout.localeCompare(a.ajout)||a.date.localeCompare(b.date));
-  const blocNouv=(!filtresActifs()&&nouveaux.length)?`<h2 class="mois nouv">🆕 Nouveautés ajoutées</h2><div class="grille">${nouveaux.map(carte).join("")}</div>`:"";
-  $("#vue-calendrier").innerHTML=blocNouv+parMois(filtrer(PRODUITS));
-  const f=PRODUITS.filter(p=>fav.has(p.id)).sort((a,b)=>a.date.localeCompare(b.date));
+  const nouveaux=PRODUITS.filter(estNouveau).sort(chrono);
+  const blocNouv=(!filtresActifs()&&nouveaux.length)?`<h2 class="mois nouv">🆕 Nouveautés (par date de sortie)</h2><div class="grille">${nouveaux.map(carte).join("")}</div>`:"";
+  $("#vue-calendrier").innerHTML=blocNouv+`<h2 class="mois tout">📅 Toutes les sorties</h2>`+parMois(filtrer(PRODUITS));
+  const f=PRODUITS.filter(p=>fav.has(p.id));
   $("#vue-favoris").innerHTML=f.length?parMois(f):`<p class="vide">Appuie sur « ☆ Suivre » pour ajouter un produit à ta liste.</p>`;
-  const n=PRODUITS.filter(p=>jours(p.date)>0&&p.type!=="Rumeur").sort((a,b)=>a.date.localeCompare(b.date))[0];
+  const n=PRODUITS.filter(p=>jours(p.date)>0&&p.type!=="Rumeur").sort(chrono)[0];
   $("#prochaine").textContent=n?`Prochaine sortie : ${n.nom} – J-${jours(n.date)}`:"Aucune sortie annoncée";
 }
 function bandeau(){
@@ -283,7 +320,7 @@ function erreur(e){const c=e&&e.code||"";return({
   "auth/user-not-found":"Aucun compte avec cet e-mail.",
   "auth/missing-password":"Entre ton mot de passe.",
   "auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.",
-  "auth/unauthorized-domain":"Domaine non autorisé dans Firebase (voir le guide)."
+  "auth/unauthorized-domain":"Domaine non autorisé dans Firebase."
 }[c])||"Erreur : "+(c||e.message);}
 async function connexion(){try{msg("Connexion…");await Compte.connecter(val("cEmail"),$("#cMdp").value);}catch(e){msg(erreur(e),true);}}
 async function inscription(){
