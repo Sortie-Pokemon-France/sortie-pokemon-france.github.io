@@ -2,393 +2,325 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pokémon Sortie</title>
-<meta name="apple-mobile-web-app-title" content="Pokémon Sortie">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>⚡ Pokémon Sortie</title>
 <style>
-  :root{--rouge:#e3350d;--jaune:#ffcb05;--bleu:#2a75bb;--fonce:#1d2c5e;--fond:#f4f6fb;--gris:#6b7280;--vert:#16a34a;--orange:#f59e0b}
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--fond);color:#1f2937;line-height:1.5}
-  header{background:linear-gradient(135deg,var(--rouge),#b91c1c);color:#fff;padding:2rem 1rem;text-align:center}
-  header h1{font-size:clamp(1.6rem,5vw,2.4rem)}
-  header p{opacity:.9;margin-top:.3rem}
-  .maj{font-size:.8rem;opacity:.85;margin-top:.4rem}
-  .prochaine{background:var(--jaune);color:var(--fonce);display:inline-block;margin-top:1rem;padding:.6rem 1.2rem;border-radius:999px;font-weight:700}
-  .bandeau{max-width:1200px;margin:1rem auto 0;padding:.8rem 1rem;background:#fff4d6;border:2px solid var(--jaune);border-radius:12px;font-weight:600;color:var(--fonce);display:flex;justify-content:space-between;gap:.5rem;align-items:center}
-  .bandeau button{border:none;background:var(--fonce);color:#fff;border-radius:8px;padding:.4rem .8rem;font-weight:600}
-  nav.onglets{display:flex;justify-content:center;gap:.5rem;padding:1rem;flex-wrap:wrap}
-  nav.onglets button{border:none;background:#fff;padding:.6rem 1.1rem;border-radius:999px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px #0002;font-size:.95rem}
-  nav.onglets button.actif{background:var(--fonce);color:#fff}
-  .filtres{max-width:1200px;margin:0 auto;padding:0 1rem 1rem;display:flex;gap:.6rem;flex-wrap:wrap}
-  .filtres input,.filtres select{padding:.6rem .8rem;border:1px solid #d1d5db;border-radius:10px;font-size:1rem;flex:1;min-width:160px;background:#fff}
-  .filtres label{display:flex;align-items:center;gap:.4rem;font-size:.9rem;background:#fff;padding:.5rem .8rem;border-radius:10px;border:1px solid #d1d5db}
-  main{max-width:1200px;margin:0 auto;padding:0 1rem 3rem}
-  h2.mois{margin:1.8rem 0 .8rem;color:var(--fonce);border-left:6px solid var(--jaune);padding-left:.6rem;text-transform:capitalize}
-  h2.nouv{border-left-color:var(--rouge)}
-  h2.tout{border-left-color:var(--fonce)}
-  .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
-  .item{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px #0001;display:flex;flex-direction:column;border-top:5px solid var(--bleu)}
-  .item.Extension{border-top-color:var(--rouge)} .item.Deck{border-top-color:var(--vert)}
-  .item.Événement{border-top-color:var(--orange)} .item.Rumeur{border-top-color:#9ca3af}
-
-  /* ----- Photos (plusieurs par produit) ----- */
-  .photo{position:relative;height:200px;overflow:hidden;background:linear-gradient(135deg,#eef2ff,#fff7d6)}
-  .photo a.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;text-decoration:none;color:var(--fonce)}
-  .photo a.ph span{font-size:4rem;opacity:.6;line-height:1}
-  .photo a.ph small{font-weight:700;font-size:.85rem;background:#fff;padding:.3rem .7rem;border-radius:999px;box-shadow:0 1px 3px #0002}
-  .galerie{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;z-index:1}
-  .galerie::-webkit-scrollbar{display:none}
-  .galerie a{flex:0 0 100%;height:100%;position:relative;scroll-snap-align:center}
-  .galerie img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:.5rem}
-  .points{position:absolute;bottom:.4rem;left:0;right:0;display:flex;justify-content:center;gap:.4rem;z-index:3}
-  .points i{width:10px;height:10px;border-radius:50%;background:#0003;cursor:pointer}
-  .points i.on{background:var(--fonce)}
-
-  .corps{padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.55rem;flex:1}
-  .item h3{font-size:1.05rem;color:var(--fonce)}
-  .meta{display:flex;flex-wrap:wrap;gap:.4rem;font-size:.8rem}
-  .tag{padding:.15rem .55rem;border-radius:999px;background:#eef2ff;color:var(--fonce);font-weight:600}
-  .tag.ok{background:#dcfce7;color:#166534} .tag.tbc{background:#fef3c7;color:#92400e}
-  .tag.jours{background:var(--fonce);color:#fff} .tag.new{background:var(--rouge);color:#fff}
-  .prix{font-size:1.35rem;font-weight:800;color:var(--rouge)}
-  .prix small{display:block;font-size:.72rem;font-weight:600;color:var(--gris)}
-  .prix.nc{font-size:.95rem;color:var(--gris)}
-  .desc{font-size:.9rem;color:#374151}
-  details summary{cursor:pointer;font-weight:600;font-size:.9rem;color:var(--bleu)}
-  .magasins{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.5rem}
-  .magasins a{font-size:.8rem;text-decoration:none;padding:.35rem .65rem;border-radius:8px;background:#f3f4f6;color:#111;border:1px solid #e5e7eb}
-  .actions{display:flex;gap:.4rem;margin-top:auto}
-  .actions button,.actions a{flex:1;border:none;padding:.6rem .3rem;border-radius:10px;cursor:pointer;font-weight:600;font-size:.82rem;text-align:center;text-decoration:none}
-  .btn-cal{background:var(--fonce);color:#fff} .btn-photo{background:var(--bleu);color:#fff}
-  .btn-fav{background:#f3f4f6;color:#111} .btn-fav.on{background:var(--jaune)}
-  .table-mag{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px #0001}
-  .table-mag th,.table-mag td{padding:.7rem;text-align:left;border-bottom:1px solid #eee;font-size:.88rem;vertical-align:top}
-  .table-mag th{background:var(--fonce);color:#fff}
-  .table-mag a{color:var(--bleu);font-weight:600}
-  .conseils,.boite{background:#fff;border-radius:12px;padding:1.2rem;margin-top:1.2rem;box-shadow:0 2px 8px #0001}
-  .conseils li{margin:.4rem 0 .4rem 1.2rem}
-  .boite{max-width:420px;margin:1.5rem auto;display:flex;flex-direction:column;gap:.7rem}
-  .boite h2{color:var(--fonce)}
-  .boite input{padding:.75rem;border:1px solid #d1d5db;border-radius:10px;font-size:1rem}
-  .btn{border:none;background:var(--fonce);color:#fff;padding:.75rem;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer}
-  .btn.sec{background:var(--jaune);color:var(--fonce)}
-  .boite a{color:var(--bleu);font-size:.9rem;text-align:center}
-  .msg{font-size:.9rem;text-align:center} .msg.err{color:var(--rouge)}
-  .vide{text-align:center;color:var(--gris);padding:2rem}
-  footer{text-align:center;color:var(--gris);font-size:.8rem;padding:2rem 1rem;border-top:1px solid #e5e7eb}
-  .cache{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f2f4f8;color:#222}
+header{background:linear-gradient(135deg,#e3350d,#ffcb05);color:#fff;padding:18px 14px;text-align:center}
+header h1{margin:0;font-size:26px;text-shadow:0 2px 3px rgba(0,0,0,.3)}
+header .maj{font-size:13px;opacity:.95;margin-top:4px}
+#prochaine{display:inline-block;margin-top:8px;background:#fff;color:#e3350d;font-weight:bold;border-radius:20px;padding:4px 12px;font-size:14px}
+#bandeau{display:none;background:#2a75bb;color:#fff;text-align:center;padding:8px;font-weight:bold}
+nav{display:flex;background:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 4px rgba(0,0,0,.1)}
+nav button{flex:1;border:none;background:none;padding:12px 4px;font-size:15px;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{border-color:#e3350d;color:#e3350d;font-weight:bold}
+main{max-width:900px;margin:auto;padding:12px}
+.filtres{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.filtres input[type=search],.filtres select{flex:1;min-width:140px;padding:9px;border:1px solid #ccc;border-radius:8px;font-size:15px}
+.filtres label{display:flex;align-items:center;gap:5px;font-size:14px}
+h2{font-size:19px;margin:18px 0 10px}
+h2.mois{text-transform:capitalize;color:#2a75bb;border-bottom:2px solid #2a75bb;padding-bottom:4px}
+.grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.carte{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;flex-direction:column}
+.corps{padding:10px 12px 12px}
+.photo{position:relative;height:200px;background:#fff;border-bottom:1px solid #eee}
+a.ph{height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;color:#2a75bb;background:#fafafa}
+a.ph span{font-size:60px}
+a.ph small{margin-top:6px;font-weight:bold}
+.photo.aphoto a.ph{display:none}
+.photo:not(.aphoto) .galerie{display:none}
+.galerie{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:200px;scrollbar-width:none}
+.galerie::-webkit-scrollbar{display:none}
+.galerie a{flex:0 0 100%;scroll-snap-align:start;display:none;height:200px}
+.galerie a.ok{display:flex;align-items:center;justify-content:center}
+.galerie img{max-width:100%;max-height:200px;object-fit:contain}
+.fl{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:none;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:26px;line-height:38px;padding:0;cursor:pointer;z-index:5;display:none}
+.fl.g{left:6px}.fl.d{right:6px}
+.photo.multi .fl{display:block}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.b{font-size:11px;font-weight:bold;padding:3px 7px;border-radius:10px;background:#eee}
+.b.neuf{background:#e3350d;color:#fff}
+.b.t{background:#2a75bb;color:#fff}
+.b.j{background:#ffcb05;color:#333}
+.b.s-confirme{background:#d4f5d4;color:#1a7a1a}
+.b.s-annonce{background:#fff0c2;color:#8a6500}
+.b.s-rumeur{background:#f3d6f5;color:#7a1a80}
+.carte h3{margin:4px 0;font-size:17px}
+.date{font-weight:bold;color:#e3350d}
+.serie{font-size:13px;color:#666}
+.prix{margin:6px 0;font-size:16px;font-weight:bold}
+.prix small{font-weight:normal;color:#888}
+.desc{font-size:14px;margin:6px 0;color:#444}
+details{margin:8px 0;background:#f6f8fb;border-radius:8px;padding:6px 8px}
+summary{cursor:pointer;font-weight:bold}
+.mags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.mags a{font-size:13px;background:#fff;border:1px solid #ccd;border-radius:6px;padding:4px 7px;text-decoration:none;color:#2a75bb}
+.btns{display:flex;gap:6px;margin-top:auto}
+.btn{flex:1;text-align:center;font-size:13px;padding:8px 4px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;text-decoration:none;color:#222}
+.btn.on{background:#ffcb05;border-color:#e0b000;font-weight:bold}
+.vide{text-align:center;color:#777;padding:30px}
+.mag{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.mag a{color:#2a75bb;font-weight:bold;text-decoration:none}
+.mag p{margin:4px 0 0;font-size:14px;color:#555}
+footer{text-align:center;font-size:12px;color:#888;padding:20px}
 </style>
 </head>
 <body>
 
 <header>
   <h1>⚡ Pokémon Sortie</h1>
-  <p>Les prochaines sorties Pokémon JCC en français + où les acheter</p>
-  <div class="maj" id="maj"></div>
-  <div class="prochaine" id="prochaine">Chargement…</div>
+  <div class="maj">Mis à jour le <span id="maj"></span></div>
+  <div id="prochaine"></div>
 </header>
+<div id="bandeau"></div>
 
-<div id="bandeau" class="bandeau cache"></div>
-
-<nav class="onglets">
-  <button class="actif" data-vue="calendrier">📅 Calendrier</button>
-  <button data-vue="favoris">⭐ Ma liste</button>
-  <button data-vue="magasins">🏬 Magasins</button>
-  <button data-vue="compte" id="ongletCompte" class="cache">👤 Compte</button>
+<nav>
+  <button data-o="cal" class="on">📅 Calendrier</button>
+  <button data-o="fav">⭐ Ma liste</button>
+  <button data-o="mag">🛒 Magasins</button>
+  <button data-o="compte" id="ongletCompte" style="display:none">👤 Compte</button>
 </nav>
 
-<div class="filtres" id="filtres">
-  <input type="search" id="recherche" placeholder="🔍 Rechercher (ETB, Règne Delta…)">
-  <select id="filtreType">
-    <option value="">Tous les types</option>
-    <option>Extension</option><option>Coffret</option><option>Deck</option><option>Événement</option><option>Rumeur</option>
-  </select>
-  <select id="filtreMagasin"><option value="">Tous les magasins</option></select>
-  <label><input type="checkbox" id="voirPasses"> Sorties passées</label>
-</div>
-
 <main>
-  <section id="vue-calendrier"></section>
-  <section id="vue-favoris" class="cache"></section>
-  <section id="vue-magasins" class="cache"></section>
-  <section id="vue-compte" class="cache"></section>
+  <div class="filtres" id="filtres">
+    <input type="search" id="q" placeholder="🔍 Rechercher…">
+    <select id="fType">
+      <option value="">Tous les types</option>
+      <option value="extension">Extension</option>
+      <option value="coffret">Coffret</option>
+      <option value="deck">Deck</option>
+      <option value="evenement">Événement</option>
+      <option value="rumeur">Rumeur</option>
+    </select>
+    <select id="fMag"><option value="">Tous les magasins</option></select>
+    <label><input type="checkbox" id="fPasse"> Sorties passées</label>
+  </div>
+  <div id="contenu"></div>
 </main>
 
-<footer>
-  Site de fan non officiel. Prix = prix conseillés / de référence en France, à titre indicatif.<br>
-  Pokémon est une marque de Nintendo / Creatures / GAME FREAK. Photos des produits © The Pokémon Company.
-</footer>
+<footer>Site de fan non officiel. Prix conseillés indicatifs, à vérifier en magasin.</footer>
 
 <script>
-/* ============ 1. RÉGLAGES ============ */
 const MISE_A_JOUR = "9 octobre 2026";
 
-/* COMPTES : colle ici la config Firebase. Laisse vide = pas de comptes. */
-var FIREBASE_CONFIG = {
-};
-
-/* ============ 2. MAGASINS ============ */
 const MAGASINS = {
-  fnac:{nom:"Fnac",type:"Culture & loisirs",domaine:"fnac.com",info:"Rayon JCC toute l'année. Ventes parfois réservées aux membres Fnac+."},
-  cultura:{nom:"Cultura",type:"Culture & loisirs",domaine:"cultura.com",info:"Rayon JCC fiable."},
-  micromania:{nom:"Micromania",type:"Jeux vidéo / TCG",domaine:"micromania.fr",info:"Tirages au sort réservés à la Mégacarte pour certains coffrets."},
-  leclerc:{nom:"E.Leclerc",type:"Hypermarché",domaine:"e.leclerc",info:"Prix conseillé, mais rayons vite vides."},
-  carrefour:{nom:"Carrefour",type:"Hypermarché",domaine:"carrefour.fr",info:"Coffrets et boosters ; arrivages variables."},
-  auchan:{nom:"Auchan",type:"Hypermarché",domaine:"auchan.fr",info:"Souvent sous clé avec limite d'achat."},
-  kingjouet:{nom:"King Jouet",type:"Magasin de jouets",domaine:"king-jouet.com",info:"Moins pris d'assaut que les hypermarchés."},
-  joueclub:{nom:"JouéClub",type:"Magasin de jouets",domaine:"joueclub.fr",info:"Bonne alternative en cas de rupture."},
-  amazon:{nom:"Amazon.fr",type:"En ligne",domaine:"amazon.fr",info:"Choisis « expédié et vendu par Amazon »."},
-  cdiscount:{nom:"Cdiscount",type:"En ligne",domaine:"cdiscount.com",info:"Choisis les produits vendus par Cdiscount."},
-  pokemoncenter:{nom:"Pokémon Center",type:"Boutique officielle",domaine:"pokemoncenter.com",info:"Boutique officielle, exclusivités."},
-  philibert:{nom:"Philibert",type:"Boutique spécialisée",domaine:"philibertnet.com",info:"Précommandes tôt, parfois au-dessus du prix conseillé."},
-  ultrajeux:{nom:"UltraJeux",type:"Boutique spécialisée",domaine:"ultrajeux.com",info:"Spécialiste TCG, displays."},
-  boutiques:{nom:"Boutiques près de chez toi",type:"Boutique locale",url:"https://events.pokemon.com/",info:"Avant-premières, tournois, displays."}
+  fnac:{nom:"Fnac",site:"fnac.com",url:"https://www.fnac.com",info:"Magasins et site, précommandes fréquentes."},
+  cultura:{nom:"Cultura",site:"cultura.com",url:"https://www.cultura.com",info:"Bon rayon cartes, retrait en magasin."},
+  micromania:{nom:"Micromania",site:"micromania.fr",url:"https://www.micromania.fr",info:"Précommandes et exclusivités."},
+  leclerc:{nom:"E.Leclerc",site:"e.leclerc",url:"https://www.e.leclerc",info:"Rayon jouets / espace culturel."},
+  carrefour:{nom:"Carrefour",site:"carrefour.fr",url:"https://www.carrefour.fr",info:"Boosters et coffrets en rayon jouets."},
+  auchan:{nom:"Auchan",site:"auchan.fr",url:"https://www.auchan.fr",info:"Rayon jouets."},
+  kingjouet:{nom:"King Jouet",site:"king-jouet.com",url:"https://www.king-jouet.com",info:"Magasins de jouets."},
+  joueclub:{nom:"JouéClub",site:"joueclub.fr",url:"https://www.joueclub.fr",info:"Magasins de jouets."},
+  amazon:{nom:"Amazon",site:"amazon.fr",url:"https://www.amazon.fr",info:"Attention aux prix des revendeurs."},
+  cdiscount:{nom:"Cdiscount",site:"cdiscount.com",url:"https://www.cdiscount.com",info:"Vérifie le vendeur."},
+  pokemoncenter:{nom:"Pokémon Center",site:"pokemoncenter.com",url:"https://www.pokemoncenter.com/fr-fr",info:"Boutique officielle."},
+  philibert:{nom:"Philibert",site:"philibertnet.com",url:"https://www.philibertnet.com",info:"Spécialiste jeux, displays."},
+  ultrajeux:{nom:"UltraJeux",site:"ultrajeux.com",url:"https://www.ultrajeux.com",info:"Spécialiste cartes à jouer."},
+  boutiques:{nom:"Boutiques spécialisées",site:"",url:"https://www.google.com/maps/search/boutique+cartes+pokemon",info:"Boutiques de jeux près de chez toi (avant-premières)."}
 };
-const GRAND_PUBLIC=["fnac","cultura","micromania","leclerc","carrefour","auchan","kingjouet","joueclub","amazon","cdiscount","philibert","ultrajeux","boutiques"];
-const DISPLAYS=["boutiques","philibert","ultrajeux","fnac","cultura","micromania"];
-const PREMIUM=["fnac","cultura","micromania","amazon","pokemoncenter","philibert","ultrajeux","boutiques"];
+const GRAND_PUBLIC=["fnac","cultura","micromania","leclerc","carrefour","auchan","kingjouet","joueclub","amazon","cdiscount"];
+const DISPLAYS=["philibert","ultrajeux","boutiques","micromania","cultura","amazon"];
+const PREMIUM=["pokemoncenter","fnac","micromania","cultura","philibert","ultrajeux","amazon","boutiques"];
 
-/* ============ 3. PRODUITS ============
-   ajout : date d'ajout au site (badge NOUVEAU pendant 14 jours)
-   prix : prix conseillé (null = non communiqué) ; prixTbc:true = à confirmer
-   recherche : texte utilisé pour le bouton Photos et par le robot
-   PHOTOS : jusqu'à 4 par produit sur GitHub → id.jpg, id-2.jpg, id-3.jpg, id-4.jpg */
 const PRODUITS = [
-  {id:"pokebox30",nom:"Boîtes 30ᵉ Anniversaire Amphinobi-ex / Nymphali-ex",recherche:"Pokemon 30th anniversary tin Greninja ex Sylveon ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-16",prix:"25,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"4 boosters + 1 carte promo. 2 versions.",magasins:GRAND_PUBLIC},
-  {id:"classeur30",nom:"Collection Classeur 30ᵉ Anniversaire",recherche:"Pokémon collection classeur 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-10-23",prix:"45,99 €",prixTbc:true,statut:"À confirmer",ajout:"2026-10-08",desc:"Classeur + 5 boosters. ⚠️ Certains sites l'annoncent au 4 décembre.",magasins:GRAND_PUBLIC},
-  {id:"avp-me06",nom:"Avant-premières Règne Delta (Coffret Stratégies et Combats)",recherche:"Pokémon Règne Delta avant-première coffret",serie:"ME06 – Règne Delta",type:"Événement",date:"2026-10-24",fin:"2026-11-01",dateTexte:"du 24 oct. au 1ᵉʳ nov. 2026",prix:"≈ 30 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Tournois en boutiques participantes pour jouer les cartes ME06 avant la sortie.",magasins:["boutiques"]},
-  {id:"deck-mentali",nom:"Deck Combat 30ᵉ Anniversaire – Mentali-ex",recherche:"Pokémon deck combat Mentali-ex 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
-  {id:"deck-noctali",nom:"Deck Combat 30ᵉ Anniversaire – Noctali-ex",recherche:"Pokémon deck combat Noctali-ex 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Deck",date:"2026-10-30",prix:"24,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"Deck de 60 cartes prêt à jouer, avec accessoires.",magasins:GRAND_PUBLIC},
-  {id:"creation-deck",nom:"Collection Création de deck",recherche:"Pokémon collection création de deck Miaouss-ex",serie:"Hors extension",type:"Deck",date:"2026-10-31",dateTexte:"Fin octobre 2026 (à confirmer)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"40 cartes pour construire son premier deck, dont un Miaouss-ex brillant, + 1 booster.",magasins:GRAND_PUBLIC},
-  {id:"me06-booster",nom:"Booster Règne Delta (ME06)",recherche:"Pokémon Règne Delta booster pochette 10 cartes",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"5,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"10 cartes par booster. Extension menée par Méga-Rayquaza-ex.",magasins:GRAND_PUBLIC},
-  {id:"me06-tripack",nom:"Tripack Règne Delta (promo Otaria)",recherche:"tripack Pokémon Règne Delta Otaria",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"17,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"3 boosters + 1 carte promo brillante Otaria.",magasins:GRAND_PUBLIC},
-  {id:"me06-bundle",nom:"Bundle 6 boosters Règne Delta",recherche:"bundle 6 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"35,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"6 boosters de l'extension.",magasins:GRAND_PUBLIC},
-  {id:"me06-etb",nom:"Coffret Dresseur d'Élite (ETB) Règne Delta",recherche:"coffret dresseur d'élite Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"55,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"9 boosters, promo Kyogre Illustration Rare, 65 protège-cartes Méga-Rayquaza, accessoires.",magasins:GRAND_PUBLIC},
-  {id:"me06-demi",nom:"Demi-display 18 boosters Règne Delta",recherche:"demi display 18 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"107,82 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"18 boosters.",magasins:DISPLAYS},
-  {id:"me06-display",nom:"Display 36 boosters Règne Delta",recherche:"display 36 boosters Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:"215,64 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"36 boosters, le format pour ouvrir en volume.",magasins:DISPLAYS},
-  {id:"me06-blisters",nom:"Blisters Règne Delta",recherche:"blister Pokémon Règne Delta",serie:"ME06 – Règne Delta",type:"Extension",date:"2026-11-06",prix:null,statut:"Confirmé",ajout:"2026-10-08",desc:"Blisters vendus en caisse.",magasins:GRAND_PUBLIC},
-  {id:"upc-journee",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Journée (Mentali-ex)",recherche:"Pokémon collection ultra premium 30e anniversaire Mentali-ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Mentali-ex, tapis, accessoires.",magasins:PREMIUM},
-  {id:"upc-soiree",nom:"Collection Ultra-Premium 30ᵉ Anniversaire – Soirée (Noctali-ex)",recherche:"Pokémon collection ultra premium 30e anniversaire Noctali-ex",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"229,99 €",prixTbc:true,statut:"Confirmé",ajout:"2026-10-08",desc:"29 boosters + 1 booster Collection Classique, promos Pikachu et Noctali-ex, tapis, accessoires.",magasins:PREMIUM},
-  {id:"metamorph",nom:"Collection Premium Métamorph 30ᵉ Anniversaire",recherche:"Pokémon collection premium Métamorph 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"49,99 €",statut:"Confirmé",ajout:"2026-10-08",desc:"8 boosters, carte promo Métamorph, présentoir.",magasins:GRAND_PUBLIC},
-  {id:"figurines",nom:"Collections avec figurine Mew / Mewtwo",recherche:"Pokémon collection figurine Mew Mewtwo 30e anniversaire",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-06",prix:"37,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-08",desc:"2 versions, avec boosters et figurine.",magasins:GRAND_PUBLIC},
-  {id:"autocollant-lucario",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Lucario",recherche:"Pokémon collection autocollant 30e anniversaire Lucario",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
-  {id:"autocollant-noadkoko",nom:"Collection autocollant réajustable 30ᵉ Anniversaire – Noadkoko d'Alola",recherche:"Pokémon coffret collection autocollant Noadkoko d'Alola 30e anniversaire boîte",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-11-13",prix:"19,99 €",prixTbc:true,statut:"Annoncé",ajout:"2026-10-09",desc:"Collection de la gamme 30 ans avec autocollant.",magasins:GRAND_PUBLIC},
-  {id:"ligue-amphinobi",nom:"Deck de Ligue de Combat Méga-Amphinobi-ex",recherche:"Pokémon deck de ligue Méga-Amphinobi-ex",serie:"Méga-Évolution",type:"Deck",date:"2026-11-13",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Deck compétitif prêt à jouer.",magasins:GRAND_PUBLIC},
-  {id:"vague30-dec",nom:"Dernière vague 30ᵉ Anniversaire",recherche:"Pokémon 30e anniversaire produits décembre 2026",serie:"30ᵉ Anniversaire",type:"Coffret",date:"2026-12-04",prix:null,statut:"À confirmer",ajout:"2026-10-09",desc:"Dernière vague de produits des 30 ans. Produits pas encore détaillés.",magasins:GRAND_PUBLIC},
-  {id:"ex-star",nom:"Nouvelle série « Pokémon ex★ »",recherche:"Pokémon JCC ex star 2027",serie:"Après Méga-Évolution",type:"Rumeur",date:"2027-04-01",dateTexte:"Printemps 2027 (non officiel)",prix:null,statut:"À confirmer",ajout:"2026-10-08",desc:"Prochaine ère du JCC teasée aux Championnats du Monde 2026. Pas de date officielle en France.",magasins:[]}
+{id:"pokebox30",nom:"Pokébox 30e anniversaire",recherche:"pokébox 30e anniversaire pokemon fr",serie:"30e anniversaire",type:"coffret",date:"2026-10-16",prix:"25,99",prixTbc:false,statut:"confirme",ajout:"2026-09-25",desc:"Pokébox de la vague 30e anniversaire avec boosters et carte promo.",magasins:GRAND_PUBLIC},
+{id:"classeur30",nom:"Classeur collector 30e anniversaire",recherche:"classeur collector 30e anniversaire pokemon",serie:"30e anniversaire",type:"coffret",date:"2026-10-23",prix:"45,99",prixTbc:false,statut:"annonce",ajout:"2026-09-25",desc:"Classeur avec boosters. La date pourrait passer au 4 décembre.",magasins:GRAND_PUBLIC},
+{id:"avp-me06",nom:"Avant-premières Méga-Évolution 06",recherche:"avant-première pokemon ME06 kit",serie:"Méga-Évolution",type:"evenement",date:"2026-10-24",fin:"2026-11-01",dateTxt:"du 24 octobre au 1er novembre 2026",prix:"30",prixTbc:true,statut:"confirme",ajout:"2026-10-01",desc:"Tournois d'avant-première en boutique : joue et repars avec des boosters de la nouvelle extension.",magasins:["boutiques","ultrajeux","philibert"]},
+{id:"deck-mentali",nom:"Deck Mentali-ex",recherche:"deck mentali ex pokemon jcc",serie:"Méga-Évolution",type:"deck",date:"2026-10-30",prix:"24,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Deck prêt à jouer autour de Mentali-ex.",magasins:GRAND_PUBLIC},
+{id:"deck-noctali",nom:"Deck Noctali-ex",recherche:"deck noctali ex pokemon jcc",serie:"Méga-Évolution",type:"deck",date:"2026-10-30",prix:"24,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Deck prêt à jouer autour de Noctali-ex.",magasins:GRAND_PUBLIC},
+{id:"creation-deck",nom:"Coffret Création de deck",recherche:"coffret création de deck pokemon",serie:"Méga-Évolution",type:"coffret",date:"2026-10-31",dateTxt:"fin octobre 2026",prix:"",prixTbc:true,statut:"annonce",ajout:"2026-10-01",desc:"Coffret pour construire ton propre deck.",magasins:GRAND_PUBLIC},
+{id:"me06-booster",nom:"ME06 – Booster",recherche:"booster pokemon ME06 français",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"5,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Booster à l'unité de la nouvelle extension.",magasins:GRAND_PUBLIC},
+{id:"me06-tripack",nom:"ME06 – Tri-pack",recherche:"tripack pokemon ME06",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"17,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"3 boosters et une carte promo.",magasins:GRAND_PUBLIC},
+{id:"me06-bundle",nom:"ME06 – Bundle 6 boosters",recherche:"bundle 6 boosters pokemon ME06",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"35,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Lot de 6 boosters.",magasins:GRAND_PUBLIC},
+{id:"me06-etb",nom:"ME06 – Coffret Dresseur d'Élite",recherche:"coffret dresseur d'élite pokemon ME06",serie:"Méga-Évolution 06",type:"coffret",date:"2026-11-06",prix:"55,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Boosters, accessoires et carte promo.",magasins:GRAND_PUBLIC},
+{id:"me06-demi",nom:"ME06 – Demi-display (18 boosters)",recherche:"demi display pokemon ME06",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"107,82",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Boîte de 18 boosters.",magasins:DISPLAYS},
+{id:"me06-display",nom:"ME06 – Display (36 boosters)",recherche:"display 36 boosters pokemon ME06",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"215,64",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Boîte complète de 36 boosters.",magasins:DISPLAYS},
+{id:"me06-blisters",nom:"ME06 – Blisters",recherche:"blister pokemon ME06",serie:"Méga-Évolution 06",type:"extension",date:"2026-11-06",prix:"",prixTbc:true,statut:"confirme",ajout:"2026-10-01",desc:"Boosters sous blister avec carte promo.",magasins:GRAND_PUBLIC},
+{id:"upc-journee",nom:"Ultra-Premium Collection – Journée",recherche:"ultra premium collection pokemon journée",serie:"Méga-Évolution",type:"coffret",date:"2026-11-06",prix:"229,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Grand coffret collector, version Journée.",magasins:PREMIUM},
+{id:"upc-soiree",nom:"Ultra-Premium Collection – Soirée",recherche:"ultra premium collection pokemon soirée",serie:"Méga-Évolution",type:"coffret",date:"2026-11-06",prix:"229,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Grand coffret collector, version Soirée.",magasins:PREMIUM},
+{id:"metamorph",nom:"Coffret Métamorph",recherche:"coffret métamorph pokemon",serie:"Méga-Évolution",type:"coffret",date:"2026-11-06",prix:"49,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Coffret autour de Métamorph.",magasins:GRAND_PUBLIC},
+{id:"figurines",nom:"Coffret figurines",recherche:"coffret figurine pokemon jcc",serie:"Méga-Évolution",type:"coffret",date:"2026-11-06",prix:"37,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Coffret avec figurine et boosters.",magasins:GRAND_PUBLIC},
+{id:"autocollant-lucario",nom:"Coffret autocollants Lucario",recherche:"coffret autocollants lucario pokemon",serie:"Méga-Évolution",type:"coffret",date:"2026-11-13",prix:"19,99",prixTbc:false,statut:"confirme",ajout:"2026-10-09",desc:"Autocollants et boosters, thème Lucario.",magasins:GRAND_PUBLIC},
+{id:"autocollant-noadkoko",nom:"Coffret autocollants Noadkoko",recherche:"coffret autocollants noadkoko pokemon",serie:"Méga-Évolution",type:"coffret",date:"2026-11-13",prix:"19,99",prixTbc:false,statut:"confirme",ajout:"2026-10-09",desc:"Autocollants et boosters, thème Noadkoko.",magasins:GRAND_PUBLIC},
+{id:"ligue-amphinobi",nom:"Deck Combat de Ligue Amphinobi",recherche:"deck combat de ligue amphinobi",serie:"Méga-Évolution",type:"deck",date:"2026-11-13",prix:"",prixTbc:true,statut:"confirme",ajout:"2026-10-09",desc:"Deck compétitif prêt à jouer.",magasins:PREMIUM},
+{id:"vague30-dec",nom:"Produits 30e anniversaire (décembre)",recherche:"pokemon 30e anniversaire coffret décembre",serie:"30e anniversaire",type:"coffret",date:"2026-12-04",prix:"",prixTbc:true,statut:"annonce",ajout:"2026-10-09",desc:"Nouvelle vague de produits du 30e anniversaire.",magasins:GRAND_PUBLIC},
+{id:"ex-star",nom:"Extension spéciale (rumeur)",recherche:"pokemon jcc rumeur 2027 extension",serie:"?",type:"rumeur",date:"2027-04-01",dateTxt:"printemps 2027 (rumeur)",prix:"",prixTbc:true,statut:"rumeur",ajout:"2026-10-09",desc:"Rumeur non confirmée par Pokémon.",magasins:GRAND_PUBLIC}
 ];
 
-/* ============ 4. FONCTIONNEMENT (pas besoin de modifier) ============ */
-const AUJ=new Date();AUJ.setHours(0,0,0,0);
-const AUJ_ISO=new Date(AUJ.getTime()-AUJ.getTimezoneOffset()*60000).toISOString().slice(0,10);
-const fav=new Set(JSON.parse(localStorage.getItem("pkm-fav")||"[]"));
-const precedenteVisite=localStorage.getItem("pkm-visite")||"";
-localStorage.setItem("pkm-visite",AUJ_ISO);
-let utilisateur=null;
-const $=s=>document.querySelector(s);
-const EMOJI={Extension:"🎴",Coffret:"🎁",Deck:"🃏","Événement":"🏆",Rumeur:"❓"};
-const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const chrono=(a,b)=>a.date.localeCompare(b.date)||a.nom.localeCompare(b.nom);
+const TYPES={extension:"Extension",coffret:"Coffret",deck:"Deck",evenement:"Événement",rumeur:"Rumeur"};
+const EMOJI={extension:"🃏",coffret:"🎁",deck:"⚔️",evenement:"🏆",rumeur:"❓"};
+const STATUTS={confirme:"Confirmé",annonce:"Annoncé",rumeur:"Rumeur"};
 
-function jours(d){return Math.round((new Date(d+"T00:00:00")-AUJ)/86400000);}
-function estNouveau(p){return p.ajout&&jours(p.ajout)>=-14&&jours(p.fin||p.date)>=0;}
-function fmtDate(p){return p.dateTexte||new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});}
-function lienMagasin(id,p){const m=MAGASINS[id];if(m.url)return m.url;
-  return "https://www.google.com/search?q="+encodeURIComponent(`site:${m.domaine} pokemon ${p.nom}`);}
-function lienPhotos(p){return "https://www.google.com/search?tbm=isch&q="+encodeURIComponent(p.recherche||("Pokémon "+p.nom));}
+let favs=JSON.parse(localStorage.getItem("pkm-fav")||"[]");
+let onglet="cal";
+const auj=new Date();auj.setHours(0,0,0,0);
 
-/* ----- Photos : id.jpg, id-2.jpg, id-3.jpg, id-4.jpg ----- */
+function jours(d){return Math.round((new Date(d+"T00:00:00")-auj)/864e5)}
+function chrono(a,b){return a.date.localeCompare(b.date)}
+function estNeuf(p){return p.ajout && (auj-new Date(p.ajout+"T00:00:00"))/864e5<14}
+function passe(p){return jours(p.fin||p.date)<0}
+function dateTxt(p){return p.dateTxt||new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+const enc=encodeURIComponent;
+
+/* ---------- Photos ---------- */
 function photo(p){
-  const lien=lienPhotos(p);
-  const noms=p.images||(p.image?[p.image]:[p.id,p.id+"-2",p.id+"-3",p.id+"-4"]);
-  const slides=noms.map(b=>{
-    const essais=/^http|\.(jpe?g|png|webp)$/i.test(b)?[b]:["jpg","png","webp","jpeg"].map(e=>b+"."+e);
-    return `<a href="${lien}" target="_blank" rel="noopener"><img src="${esc(essais[0])}" data-reste="${esc(essais.slice(1).join("|"))}" alt="${esc(p.nom)}" loading="lazy" onerror="imgErr(this)"></a>`;
-  }).join("");
+  let s="";
+  ["","-2","-3","-4"].forEach(x=>{
+    s+=`<a target="_blank"><img src="${p.id}${x}.jpg" data-b="${p.id}${x}" data-e="0" onload="imgOk(this)" onerror="imgErr(this)" alt=""></a>`;
+  });
   return `<div class="photo">
-    <a class="ph" href="${lien}" target="_blank" rel="noopener"><span>${EMOJI[p.type]||"🎴"}</span><small>👆 Voir à quoi ça ressemble</small></a>
-    <div class="galerie" onscroll="majPoints(this)">${slides}</div><div class="points"></div></div>`;
+    <a class="ph" target="_blank" href="https://www.google.com/search?tbm=isch&q=${enc(p.recherche)}"><span>${EMOJI[p.type]}</span><small>👆 Voir à quoi ça ressemble</small></a>
+    <div class="galerie">${s}</div>
+    <button type="button" class="fl g" onclick="fleche(this,-1)">‹</button>
+    <button type="button" class="fl d" onclick="fleche(this,1)">›</button>
+  </div>`;
 }
+function imgOk(el){el.parentNode.classList.add("ok");el.parentNode.href=el.src;majPhoto(el.closest(".photo"))}
 function imgErr(el){
-  const r=el.dataset.reste?el.dataset.reste.split("|"):[];
-  if(r.length){el.src=r.shift();el.dataset.reste=r.join("|");return;}
-  const g=el.closest(".galerie");(el.closest("a")||el).remove();
-  if(g){if(!g.children.length)g.remove();else majPoints(g);}
+  const E=["jpg","png","webp","jpeg"];let e=+el.dataset.e+1;
+  if(e<E.length){el.dataset.e=e;el.src=el.dataset.b+"."+E[e]}
+  else{const box=el.closest(".photo");el.parentNode.remove();if(box)majPhoto(box)}
 }
-function majPoints(g){
-  const pts=g.parentNode&&g.parentNode.querySelector(".points");if(!pts)return;
-  const n=g.children.length;if(n<2){pts.innerHTML="";return;}
-  const i=Math.round(g.scrollLeft/g.clientWidth);
-  pts.innerHTML=Array.from({length:n},(_,k)=>`<i class="${k===i?"on":""}" onclick="allerA(this,${k})"></i>`).join("");
+function majPhoto(box){
+  if(!box)return;
+  const n=box.querySelectorAll(".galerie a.ok").length;
+  box.classList.toggle("aphoto",n>0);
+  box.classList.toggle("multi",n>1);
 }
-function allerA(pt,k){const g=pt.parentNode.previousElementSibling;g.scrollTo({left:k*g.clientWidth,behavior:"smooth"});}
-document.addEventListener("load",e=>{const g=e.target.closest&&e.target.closest(".galerie");if(g)majPoints(g);},true);
+function fleche(b,d){
+  const g=b.parentNode.querySelector(".galerie");
+  const n=g.querySelectorAll("a.ok").length;if(n<2)return;
+  const w=g.clientWidth;let i=Math.round(g.scrollLeft/w);
+  i=(i+d+n)%n;
+  g.scrollTo({left:i*w,behavior:"smooth"});
+}
 
-function prixHtml(p){
-  if(!p.prix)return `<div class="prix nc">Prix conseillé non communiqué</div>`;
-  return `<div class="prix">${p.prix}<small>Prix conseillé${p.prixTbc?" · à confirmer":""}</small></div>`;
-}
+/* ---------- Carte ---------- */
+function lienMag(p){return k=>{
+  const m=MAGASINS[k];if(!m)return"";
+  const url=m.site?`https://www.google.com/search?q=${enc(p.recherche+" site:"+m.site)}`:m.url;
+  return `<a target="_blank" href="${url}">${m.nom}</a>`;
+}}
 function carte(p){
-  const j=jours(p.date);
-  const badge=j>0?`J-${j}`:(jours(p.fin||p.date)>=0?"En cours / Aujourd'hui !":"Sorti");
-  const mags=p.magasins.map(id=>`<a href="${lienMagasin(id,p)}" target="_blank" rel="noopener">${MAGASINS[id].nom}</a>`).join("");
-  return `<article class="item ${p.type}">${photo(p)}<div class="corps">
-    <div class="meta">${estNouveau(p)?'<span class="tag new">🆕 NOUVEAU</span>':""}<span class="tag">${p.type}</span>
-      <span class="tag ${p.statut==="Confirmé"?"ok":"tbc"}">${p.statut}</span>
-      <span class="tag jours">${badge}</span></div>
-    <h3>${p.nom}</h3>
-    <div style="font-size:.85rem;color:var(--gris)">📅 ${fmtDate(p)} · ${p.serie}</div>
-    ${prixHtml(p)}
-    <p class="desc">${p.desc}</p>
-    ${p.magasins.length?`<details><summary>🏬 Où l'acheter (${p.magasins.length})</summary><div class="magasins">${mags}</div></details>`:""}
-    <div class="actions">
-      <a class="btn-photo" href="${lienPhotos(p)}" target="_blank" rel="noopener">🖼️ Photos</a>
-      <button class="btn-cal" onclick="ics('${p.id}')">📆 Agenda</button>
-      <button class="btn-fav ${fav.has(p.id)?"on":""}" onclick="toggleFav('${p.id}')">${fav.has(p.id)?"⭐ Suivi":"☆ Suivre"}</button>
-    </div></div></article>`;
+  const j=jours(p.date),fav=favs.includes(p.id);
+  return `<div class="carte">${photo(p)}<div class="corps">
+  <div class="badges">${estNeuf(p)?'<span class="b neuf">NOUVEAU</span>':''}<span class="b t">${TYPES[p.type]}</span><span class="b s-${p.statut}">${STATUTS[p.statut]}</span>${j>=0&&p.type!="rumeur"?`<span class="b j">${j==0?"Aujourd'hui !":"J-"+j}</span>`:''}</div>
+  <h3>${p.nom}</h3>
+  <div class="date">📅 ${dateTxt(p)}</div>
+  <div class="serie">${p.serie}</div>
+  <div class="prix">💶 ${p.prix?p.prix+" €":"Prix inconnu"}${p.prixTbc?" <small>(à confirmer)</small>":""}</div>
+  <p class="desc">${p.desc}</p>
+  <details><summary>🛒 Où l'acheter</summary><div class="mags">${p.magasins.map(lienMag(p)).join("")}</div></details>
+  <div class="btns">
+    <a class="btn" target="_blank" href="https://www.google.com/search?tbm=isch&q=${enc(p.recherche)}">🖼️ Photos</a>
+    <button class="btn" onclick="agenda('${p.id}')">📆 Agenda</button>
+    <button class="btn ${fav?"on":""}" onclick="suivre('${p.id}')">${fav?"★ Suivi":"☆ Suivre"}</button>
+  </div></div></div>`;
 }
-function filtresActifs(){return $("#recherche").value.trim()||$("#filtreType").value||$("#filtreMagasin").value;}
-function filtrer(l){
-  const q=$("#recherche").value.toLowerCase().trim(),t=$("#filtreType").value,m=$("#filtreMagasin").value,passes=$("#voirPasses").checked;
-  return l.filter(p=>(passes||jours(p.fin||p.date)>=0)&&(!t||p.type===t)&&(!m||p.magasins.includes(m))&&
-    (!q||(p.nom+" "+p.serie+" "+p.desc).toLowerCase().includes(q))).sort(chrono);
+
+/* ---------- Actions ---------- */
+function suivre(id){
+  favs=favs.includes(id)?favs.filter(x=>x!=id):[...favs,id];
+  localStorage.setItem("pkm-fav",JSON.stringify(favs));
+  if(window.syncFavs)window.syncFavs(favs);
+  rendre();
 }
-function parMois(l){
-  if(!l.length)return `<p class="vide">Aucune sortie ne correspond.</p>`;
-  const g={};[...l].sort(chrono).forEach(p=>{const k=p.type==="Rumeur"?"Plus tard":new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"});(g[k]||=[]).push(p);});
-  return Object.entries(g).map(([k,i])=>`<h2 class="mois">${k}</h2><div class="grille">${i.map(carte).join("")}</div>`).join("");
-}
-function rendre(){
-  const nouveaux=PRODUITS.filter(estNouveau).sort(chrono);
-  const blocNouv=(!filtresActifs()&&nouveaux.length)?`<h2 class="mois nouv">🆕 Nouveautés (par date de sortie)</h2><div class="grille">${nouveaux.map(carte).join("")}</div>`:"";
-  $("#vue-calendrier").innerHTML=blocNouv+`<h2 class="mois tout">📅 Toutes les sorties</h2>`+parMois(filtrer(PRODUITS));
-  const f=PRODUITS.filter(p=>fav.has(p.id));
-  $("#vue-favoris").innerHTML=f.length?parMois(f):`<p class="vide">Appuie sur « ☆ Suivre » pour ajouter un produit à ta liste.</p>`;
-  const n=PRODUITS.filter(p=>jours(p.date)>0&&p.type!=="Rumeur").sort(chrono)[0];
-  $("#prochaine").textContent=n?`Prochaine sortie : ${n.nom} – J-${jours(n.date)}`:"Aucune sortie annoncée";
-}
-function bandeau(){
-  if(!precedenteVisite)return;
-  const nb=PRODUITS.filter(p=>p.ajout&&p.ajout>precedenteVisite).length;
-  if(!nb)return;
-  const b=$("#bandeau");
-  b.innerHTML=`<span>🆕 ${nb} nouveau${nb>1?"x":""} produit${nb>1?"s":""} depuis ta dernière visite !</span><button onclick="this.parentNode.classList.add('cache')">OK</button>`;
-  b.classList.remove("cache");
-}
-function rendreMagasins(){
-  const lignes=Object.entries(MAGASINS).map(([id,m])=>{
-    const nb=PRODUITS.filter(p=>p.magasins.includes(id)&&jours(p.fin||p.date)>=0).length;
-    return `<tr><td><a href="${m.url||"https://www."+m.domaine}" target="_blank" rel="noopener">${m.nom}</a></td><td>${m.type}</td><td>${m.info}</td><td style="text-align:center">${nb}</td></tr>`;}).join("");
-  $("#vue-magasins").innerHTML=`<h2 class="mois">Où acheter en France</h2>
-  <table class="table-mag"><thead><tr><th>Magasin</th><th>Type</th><th>À savoir</th><th>À venir</th></tr></thead><tbody>${lignes}</tbody></table>
-  <div class="conseils"><h3>💡 Conseils</h3><ul>
-    <li>Hypermarchés : passe à l'ouverture le jour de la sortie.</li>
-    <li>Compare toujours au prix conseillé avant de précommander.</li>
-    <li>Méfie-toi des sites inconnus qui ont « du stock partout » : souvent une arnaque.</li>
-  </ul></div>`;
-}
-function sauverFav(){localStorage.setItem("pkm-fav",JSON.stringify([...fav]));if(utilisateur&&window.Compte)Compte.sauver([...fav]);}
-function toggleFav(id){fav.has(id)?fav.delete(id):fav.add(id);sauverFav();rendre();rendreCompte();}
-function ics(id){
-  const p=PRODUITS.find(x=>x.id===id),d=p.date.replace(/-/g,"");
-  const f=new Date(p.date+"T12:00:00");f.setDate(f.getDate()+1);
+function setFavs(a){favs=a;localStorage.setItem("pkm-fav",JSON.stringify(favs));rendre()}
+function agenda(id){
+  const p=PRODUITS.find(x=>x.id==id);
+  const d=p.date.replace(/-/g,""),f=new Date(p.date+"T00:00:00");f.setDate(f.getDate()+1);
   const d2=f.toISOString().slice(0,10).replace(/-/g,"");
-  const c=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//PokemonSortie//FR","BEGIN:VEVENT",`UID:${id}@pokemonsortie`,
-    `DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${d2}`,`SUMMARY:Sortie Pokémon : ${p.nom}`,
-    `DESCRIPTION:${p.desc} – Prix conseillé : ${p.prix||"non communiqué"}`,"END:VEVENT","END:VCALENDAR"].join("\r\n");
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([c],{type:"text/calendar"}));a.download=`${id}.ics`;a.click();
+  const ics=`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Pokemon Sortie//FR\r\nBEGIN:VEVENT\r\nUID:${p.id}@pokemon-sortie\r\nDTSTAMP:${d}T000000Z\r\nDTSTART;VALUE=DATE:${d}\r\nDTEND;VALUE=DATE:${d2}\r\nSUMMARY:Sortie Pokémon : ${p.nom}\r\nDESCRIPTION:${p.prix?p.prix+" €":""}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
+  a.download=p.id+".ics";a.click();
 }
 
-/* ----- Comptes ----- */
-function getFav(){return [...fav];}
-function comptesActifs(){$("#ongletCompte").classList.remove("cache");rendreCompte();}
-function majCompte(u,distants){
-  utilisateur=u;
-  if(u){(distants||[]).forEach(id=>fav.add(id));sauverFav();}
-  $("#ongletCompte").textContent=u?"👤 "+u.pseudo:"👤 Compte";
-  rendre();rendreCompte();
+/* ---------- Affichage ---------- */
+function filtrer(l){
+  const q=document.getElementById("q").value.toLowerCase().trim();
+  const t=document.getElementById("fType").value;
+  const m=document.getElementById("fMag").value;
+  const vp=document.getElementById("fPasse").checked;
+  return l.filter(p=>(!q||(p.nom+" "+p.serie+" "+p.desc).toLowerCase().includes(q))&&(!t||p.type==t)&&(!m||p.magasins.includes(m))&&(vp||!passe(p)));
 }
-const val=id=>($("#"+id)?.value||"").trim();
-function msg(t,err){const m=$("#cMsg");if(m){m.textContent=t;m.className="msg"+(err?" err":"");}}
-function erreur(e){const c=e&&e.code||"";return({
-  "auth/email-already-in-use":"Cet e-mail a déjà un compte. Connecte-toi.",
-  "auth/invalid-email":"Adresse e-mail invalide.",
-  "auth/weak-password":"Mot de passe trop court (6 caractères minimum).",
-  "auth/invalid-credential":"E-mail ou mot de passe incorrect.",
-  "auth/wrong-password":"Mot de passe incorrect.",
-  "auth/user-not-found":"Aucun compte avec cet e-mail.",
-  "auth/missing-password":"Entre ton mot de passe.",
-  "auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.",
-  "auth/unauthorized-domain":"Domaine non autorisé dans Firebase."
-}[c])||"Erreur : "+(c||e.message);}
-async function connexion(){try{msg("Connexion…");await Compte.connecter(val("cEmail"),$("#cMdp").value);}catch(e){msg(erreur(e),true);}}
-async function inscription(){
-  const p=val("cPseudo");if(!p)return msg("Choisis un pseudo.",true);
-  try{msg("Création du compte…");await Compte.inscrire(p,val("cEmail"),$("#cMdp").value);
-    if(utilisateur){utilisateur.pseudo=p;majCompte(utilisateur,[]);}}catch(e){msg(erreur(e),true);}
-}
-async function oubli(){const e=val("cEmail");if(!e)return msg("Écris ton e-mail d'abord.",true);
-  try{await Compte.oubli(e);msg("📧 E-mail de réinitialisation envoyé (regarde aussi les spams).");}catch(err){msg(erreur(err),true);}}
-async function deconnexion(){await Compte.deconnecter();}
-function rendreCompte(){
-  const el=$("#vue-compte");if(!window.Compte){el.innerHTML="";return;}
-  if(utilisateur){el.innerHTML=`<div class="boite"><h2>Salut ${esc(utilisateur.pseudo)} 👋</h2>
-    <p>Connecté avec ${esc(utilisateur.email)}</p>
-    <p>⭐ ${fav.size} produit(s) suivi(s), synchronisés sur tous tes appareils.</p>
-    <button class="btn sec" onclick="deconnexion()">Se déconnecter</button></div>`;return;}
-  el.innerHTML=`<div class="boite"><h2>👤 Mon compte</h2>
-    <p>Crée un compte gratuit pour retrouver ta liste ⭐ sur tous tes appareils.</p>
-    <input id="cPseudo" placeholder="Pseudo (seulement pour créer un compte)" autocomplete="nickname">
-    <input id="cEmail" type="email" placeholder="E-mail" autocomplete="email">
-    <input id="cMdp" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
-    <button class="btn" onclick="connexion()">Se connecter</button>
-    <button class="btn sec" onclick="inscription()">Créer un compte</button>
-    <a href="#" onclick="oubli();return false">Mot de passe oublié ?</a>
-    <p id="cMsg" class="msg"></p></div>`;
+function grille(l){return `<div class="grille">${l.map(carte).join("")}</div>`}
+function rendre(){
+  const c=document.getElementById("contenu");
+  document.getElementById("filtres").style.display=(onglet=="cal"||onglet=="fav")?"flex":"none";
+  if(onglet=="cal"){
+    const l=filtrer(PRODUITS).sort(chrono);
+    if(!l.length){c.innerHTML='<div class="vide">Aucun produit trouvé.</div>';return}
+    let h="";
+    const n=l.filter(estNeuf);
+    if(n.length)h+=`<h2>🆕 Nouveautés (par date de sortie)</h2>${grille(n)}`;
+    h+=`<h2>📅 Toutes les sorties</h2>`;
+    const mois={};
+    l.forEach(p=>{const k=p.date.slice(0,7);(mois[k]=mois[k]||[]).push(p)});
+    Object.keys(mois).sort().forEach(k=>{
+      const nom=new Date(k+"-01T00:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+      h+=`<h2 class="mois">${nom}</h2>${grille(mois[k])}`;
+    });
+    c.innerHTML=h;
+  }else if(onglet=="fav"){
+    const l=filtrer(PRODUITS.filter(p=>favs.includes(p.id))).sort(chrono);
+    c.innerHTML=l.length?`<h2>⭐ Ma liste</h2>${grille(l)}`:'<div class="vide">Ta liste est vide.<br>Clique sur ☆ Suivre sur un produit.</div>';
+  }else if(onglet=="mag"){
+    c.innerHTML="<h2>🛒 Où acheter des cartes Pokémon</h2>"+Object.values(MAGASINS).map(m=>`<div class="mag"><a target="_blank" href="${m.url}">${m.nom}</a><p>${m.info}</p></div>`).join("");
+  }else if(onglet=="compte"){
+    c.innerHTML='<div id="zoneCompte" class="vide">Chargement…</div>';
+    if(window.afficherCompte)window.afficherCompte();
+  }
 }
 
-/* ----- Démarrage ----- */
-$("#maj").textContent="Mis à jour le "+MISE_A_JOUR;
-Object.entries(MAGASINS).forEach(([id,m])=>$("#filtreMagasin").insertAdjacentHTML("beforeend",`<option value="${id}">${m.nom}</option>`));
-["recherche","filtreType","filtreMagasin","voirPasses"].forEach(id=>$("#"+id).addEventListener("input",rendre));
-document.querySelectorAll("nav.onglets button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll("nav.onglets button").forEach(x=>x.classList.remove("actif"));b.classList.add("actif");
-  ["calendrier","favoris","magasins","compte"].forEach(v=>$("#vue-"+v).classList.toggle("cache",v!==b.dataset.vue));
-  $("#filtres").classList.toggle("cache",b.dataset.vue!=="calendrier");});
-rendre();rendreMagasins();bandeau();
+/* ---------- Démarrage ---------- */
+document.getElementById("maj").textContent=MISE_A_JOUR;
+(function(){
+  const p=PRODUITS.filter(p=>p.type!="rumeur"&&jours(p.date)>=0).sort(chrono)[0];
+  const e=document.getElementById("prochaine");
+  if(p){const j=jours(p.date);e.textContent=`Prochaine sortie : ${j==0?"aujourd'hui !":"J-"+j}`}else e.style.display="none";
+})();
+(function(){
+  const der=localStorage.getItem("pkm-visite");
+  if(der){
+    const n=PRODUITS.filter(p=>p.ajout&&new Date(p.ajout+"T23:59:59")>new Date(+der)).length;
+    if(n){const b=document.getElementById("bandeau");b.textContent=`🎉 ${n} nouveau${n>1?"x":""} produit${n>1?"s":""} depuis ta dernière visite`;b.style.display="block"}
+  }
+  localStorage.setItem("pkm-visite",Date.now());
+})();
+const fMag=document.getElementById("fMag");
+Object.entries(MAGASINS).forEach(([k,m])=>fMag.innerHTML+=`<option value="${k}">${m.nom}</option>`);
+["q","fType","fMag","fPasse"].forEach(id=>document.getElementById(id).addEventListener("input",rendre));
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");onglet=b.dataset.o;rendre();
+});
+rendre();
 </script>
 
 <script type="module">
-/* Comptes Firebase : ne s'active que si FIREBASE_CONFIG est rempli */
-const CFG=window.FIREBASE_CONFIG||{};
-if(CFG.apiKey){
-  try{
-    const B="https://www.gstatic.com/firebasejs/10.12.2/";
-    const A=await import(B+"firebase-app.js");
-    const AU=await import(B+"firebase-auth.js");
-    const FS=await import(B+"firebase-firestore.js");
-    const app=A.initializeApp(CFG),auth=AU.getAuth(app),db=FS.getFirestore(app);
-    const ref=uid=>FS.doc(db,"users",uid);
-    window.Compte={
-      inscrire:async(pseudo,email,mdp)=>{
-        const c=await AU.createUserWithEmailAndPassword(auth,email,mdp);
-        await AU.updateProfile(c.user,{displayName:pseudo});
-        await FS.setDoc(ref(c.user.uid),{pseudo,favoris:window.getFav()},{merge:true});
-      },
-      connecter:(email,mdp)=>AU.signInWithEmailAndPassword(auth,email,mdp),
-      deconnecter:()=>AU.signOut(auth),
-      oubli:email=>AU.sendPasswordResetEmail(auth,email),
-      sauver:liste=>auth.currentUser&&FS.setDoc(ref(auth.currentUser.uid),{favoris:liste},{merge:true}).catch(()=>{})
-    };
-    AU.onAuthStateChanged(auth,async u=>{
-      if(!u){window.majCompte(null,[]);return;}
-      let distants=[];
-      try{const s=await FS.getDoc(ref(u.uid));if(s.exists())distants=s.data().favoris||[];}catch(e){}
-      window.majCompte({uid:u.uid,email:u.email,pseudo:u.displayName||u.email.split("@")[0]},distants);
-    });
-    window.comptesActifs();
-  }catch(e){console.error("Firebase :",e);}
+const FIREBASE_CONFIG = {apiKey:"",authDomain:"",projectId:"",appId:""};
+if(FIREBASE_CONFIG.apiKey){
+  const V="https://www.gstatic.com/firebasejs/10.12.0/";
+  const {initializeApp}=await import(V+"firebase-app.js");
+  const {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}=await import(V+"firebase-auth.js");
+  const {getFirestore,doc,getDoc,setDoc}=await import(V+"firebase-firestore.js");
+  const app=initializeApp(FIREBASE_CONFIG),auth=getAuth(app),db=getFirestore(app);
+  let user=null;
+  document.getElementById("ongletCompte").style.display="";
+  window.syncFavs=f=>{if(user)setDoc(doc(db,"users",user.uid),{favs:f})};
+  window.afficherCompte=()=>{
+    const z=document.getElementById("zoneCompte");if(!z)return;
+    if(user){z.innerHTML=`Connecté : <b>${user.email}</b><br><br><button class="btn" id="deco">Se déconnecter</button>`;document.getElementById("deco").onclick=()=>signOut(auth)}
+    else{z.innerHTML=`<button class="btn" id="co">Se connecter avec Google</button>`;document.getElementById("co").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider())}
+  };
+  onAuthStateChanged(auth,async u=>{
+    user=u;
+    if(u){const s=await getDoc(doc(db,"users",u.uid));const f=s.exists()?s.data().favs||[]:[];const m=[...new Set([...f,...JSON.parse(localStorage.getItem("pkm-fav")||"[]")])];setFavs(m);window.syncFavs(m)}
+    window.afficherCompte();
+  });
 }
 </script>
 </body>
