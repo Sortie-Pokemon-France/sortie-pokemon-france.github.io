@@ -6,6 +6,10 @@ on:
   push:
     paths: ["index.html"]
   workflow_dispatch:
+    inputs:
+      refaire:
+        description: "Refaire toutes les photos ? (oui / non)"
+        default: "non"
 
 permissions:
   contents: write
@@ -22,25 +26,46 @@ jobs:
       - name: Chercher les photos manquantes
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          REFAIRE: ${{ github.event.inputs.refaire }}
         run: |
           cat > /tmp/photos.mjs <<'EOF'
           import fs from "node:fs";
           const CLE = process.env.SERPAPI_KEY;
           if (!CLE) { console.log("Clé SERPAPI_KEY manquante"); process.exit(0); }
+          const REFAIRE = (process.env.REFAIRE || "").trim().toLowerCase() === "oui";
           const EXT = ["jpg","jpeg","png","webp","JPG","JPEG","PNG"];
           const TYPES = {"image/jpeg":"jpg","image/jpg":"jpg","image/png":"png","image/webp":"webp"};
+          const FIABLES = ["pokemon.com","pokemoncenter","asmodee","philibert","ultrajeux","fnac","cultura","micromania","leclerc","carrefour","auchan","king-jouet","joueclub","amazon","cardmarket","pokecardex","lebooster","pokegeek"];
+          const GENERIQUES = new Set(["pokemon","collection","coffret","anniversaire","30e","30eme","avec","pour","des","les","the"]);
+          const norm = s => (s || "").replace(/ᵉ/g, "e").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
           const html = fs.readFileSync("index.html", "utf8");
           const produits = html.split("\n")
             .filter(l => l.trim().startsWith('{id:"'))
             .map(l => ({
               id: l.match(/id:"([^"]+)"/)?.[1],
-              nom: l.match(/nom:"([^"]+)"/)?.[1],
+              nom: l.match(/nom:"([^"]+)"/)?.[1] || "",
               recherche: l.match(/recherche:"([^"]+)"/)?.[1],
               rumeur: l.includes('type:"Rumeur"'),
               image: l.includes('image:"')
             }))
             .filter(p => p.id && !p.rumeur && !p.image);
+          if (REFAIRE) {
+            for (const p of produits) for (const e of EXT) {
+              const f = p.id + "." + e;
+              if (fs.existsSync(f)) { fs.unlinkSync(f); console.log("🗑️ " + f); }
+            }
+          }
           const aDejaPhoto = id => EXT.some(e => fs.existsSync(id + "." + e));
+          const mots = p => [...new Set(norm(p.nom).split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !GENERIQUES.has(w)))];
+          function score(img, m) {
+            const t = norm((img.title || "") + " " + (img.source || "") + " " + (img.link || ""));
+            const fiable = FIABLES.some(d => t.includes(d));
+            const trouves = m.filter(w => t.includes(w)).length;
+            const besoin = Math.max(1, Math.ceil(m.length * 0.6));
+            if (trouves < besoin) return -1;
+            if (!t.includes("pokemon") && !fiable) return -1;
+            return trouves * 2 + (fiable ? 3 : 0);
+          }
           async function telecharger(url, id, tailleMin) {
             try {
               const r = await fetch(url, { headers: {"User-Agent": "Mozilla/5.0"}, signal: AbortSignal.timeout(15000) });
@@ -56,19 +81,24 @@ jobs:
           }
           let n = 0;
           for (const p of produits) {
-            if (aDejaPhoto(p.id) || n >= 30) continue;
+            if (aDejaPhoto(p.id) || n >= 40) continue;
             n++;
             const q = p.recherche || ("Pokémon " + p.nom);
-            console.log("🔍 " + p.id + " : " + q);
+            const m = mots(p);
+            console.log("🔍 " + p.id + " : " + q + "  [mots : " + m.join(", ") + "]");
             try {
               const url = "https://serpapi.com/search.json?engine=google_images&hl=fr&gl=fr&q=" + encodeURIComponent(q) + "&api_key=" + CLE;
               const data = await (await fetch(url)).json();
-              if (data.error) console.log("❌ SerpApi : " + data.error);
-              const res = (data.images_results || []).slice(0, 8);
+              if (data.error) { console.log("❌ SerpApi : " + data.error); continue; }
+              const bons = (data.images_results || []).slice(0, 25)
+                .map(img => ({ img, s: score(img, m) }))
+                .filter(x => x.s >= 0)
+                .sort((a, b) => b.s - a.s)
+                .map(x => x.img);
               let ok = false;
-              for (const img of res) { if (img.original && await telecharger(img.original, p.id, 8000)) { ok = true; break; } }
-              if (!ok) for (const img of res) { if (img.thumbnail && await telecharger(img.thumbnail, p.id, 1500)) { ok = true; break; } }
-              if (!ok) console.log("⚠️ Pas de photo pour " + p.id);
+              for (const img of bons) { if (img.original && await telecharger(img.original, p.id, 8000)) { ok = true; break; } }
+              if (!ok) for (const img of bons) { if (img.thumbnail && await telecharger(img.thumbnail, p.id, 1500)) { ok = true; break; } }
+              if (!ok) console.log("⏳ Pas encore de photo sûre pour " + p.id + " (nouvel essai demain)");
             } catch (e) { console.log("❌ " + p.id + " : " + e.message); }
           }
           console.log("Terminé (" + n + " recherches)");
@@ -80,6 +110,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then echo "Rien de nouveau"; exit 0; fi
-          git commit -m "Photos ajoutées automatiquement"
+          git commit -m "Photos mises à jour automatiquement"
           git push
           curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
