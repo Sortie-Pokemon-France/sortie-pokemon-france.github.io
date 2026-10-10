@@ -72,6 +72,15 @@ summary{cursor:pointer;font-weight:bold}
 .mag{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .mag a{color:#2a75bb;font-weight:bold;text-decoration:none}
 .mag p{margin:4px 0 0;font-size:14px;color:#555}
+.compte{max-width:380px;margin:20px auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 6px rgba(0,0,0,.1);text-align:center}
+.compte h2{margin-top:0}
+.compte input{width:100%;padding:11px;margin:5px 0;border:1px solid #ccc;border-radius:8px;font-size:15px}
+.compte .btn{display:block;width:100%;margin:7px 0;padding:11px;font-size:15px}
+.btn.rouge{background:#e3350d;border-color:#e3350d;color:#fff;font-weight:bold}
+.lien{background:none;border:none;color:#2a75bb;cursor:pointer;text-decoration:underline;font-size:13px;margin-top:4px}
+.ou{color:#999;margin:10px 0;font-size:13px}
+.msg{color:#e3350d;font-size:14px;min-height:18px;margin:4px 0}
+.msg.bon{color:#1a7a1a}
 footer{text-align:center;font-size:12px;color:#888;padding:20px}
 </style>
 </head>
@@ -311,7 +320,7 @@ function rendre(){
   }else if(onglet=="mag"){
     c.innerHTML="<h2>🛒 Où acheter des cartes Pokémon</h2>"+Object.values(MAGASINS).map(m=>`<div class="mag"><a target="_blank" href="${m.url}">${m.nom}</a><p>${m.info}</p></div>`).join("");
   }else if(onglet=="compte"){
-    c.innerHTML='<div id="zoneCompte" class="vide">Chargement…</div>';
+    c.innerHTML='<div id="zoneCompte" class="compte">Chargement…</div>';
     if(window.afficherCompte)window.afficherCompte();
   }
   document.querySelectorAll(".photo[data-id]").forEach(remplir);
@@ -343,24 +352,81 @@ rendre();
 </script>
 
 <script type="module">
-const FIREBASE_CONFIG = {apiKey:"",authDomain:"",projectId:"",appId:""};
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBuq_AxgRjfOz77FVtoH0P5ApCA1fL8jrA",
+  authDomain: "pokemon-sortie.firebaseapp.com",
+  projectId: "pokemon-sortie",
+  storageBucket: "pokemon-sortie.firebasestorage.app",
+  messagingSenderId: "562702957472",
+  appId: "1:562702957472:web:2c3612a0690737233382c5"
+};
 if(FIREBASE_CONFIG.apiKey){
   const V="https://www.gstatic.com/firebasejs/10.12.0/";
   const {initializeApp}=await import(V+"firebase-app.js");
-  const {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}=await import(V+"firebase-auth.js");
+  const A=await import(V+"firebase-auth.js");
   const {getFirestore,doc,getDoc,setDoc}=await import(V+"firebase-firestore.js");
-  const app=initializeApp(FIREBASE_CONFIG),auth=getAuth(app),db=getFirestore(app);
+  const app=initializeApp(FIREBASE_CONFIG),auth=A.getAuth(app),db=getFirestore(app);
+  auth.languageCode="fr";
   let user=null;
-  document.getElementById("ongletCompte").style.display="";
-  window.syncFavs=f=>{if(user)setDoc(doc(db,"users",user.uid),{favs:f})};
+  const oc=document.getElementById("ongletCompte");oc.style.display="";
+  const ERR={
+    "auth/invalid-email":"Adresse e-mail invalide.",
+    "auth/missing-email":"Écris ton adresse e-mail.",
+    "auth/missing-password":"Écris un mot de passe.",
+    "auth/weak-password":"Mot de passe trop court (6 caractères minimum).",
+    "auth/email-already-in-use":"Cette adresse a déjà un compte. Clique sur « Se connecter ».",
+    "auth/invalid-credential":"E-mail ou mot de passe incorrect.",
+    "auth/wrong-password":"E-mail ou mot de passe incorrect.",
+    "auth/user-not-found":"Aucun compte avec cet e-mail.",
+    "auth/too-many-requests":"Trop d'essais. Réessaie dans quelques minutes.",
+    "auth/popup-closed-by-user":"",
+    "auth/cancelled-popup-request":"",
+    "auth/popup-blocked":"La fenêtre Google a été bloquée. Autorise les pop-ups.",
+    "auth/unauthorized-domain":"Site non autorisé dans Firebase (étape 3).",
+    "auth/operation-not-allowed":"Méthode non activée dans Firebase (étape 3).",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":"Clé Firebase incorrecte."
+  };
+  const msg=(t,bon)=>{const m=document.getElementById("cmsg");if(m){m.textContent=t;m.className="msg"+(bon?" bon":"")}};
+  const err=e=>msg(e.code in ERR?ERR[e.code]:"Erreur : "+e.code);
+  window.syncFavs=f=>{if(user)setDoc(doc(db,"users",user.uid),{favs:f}).catch(()=>{})};
   window.afficherCompte=()=>{
     const z=document.getElementById("zoneCompte");if(!z)return;
-    if(user){z.innerHTML=`Connecté : <b>${user.email}</b><br><br><button class="btn" id="deco">Se déconnecter</button>`;document.getElementById("deco").onclick=()=>signOut(auth)}
-    else{z.innerHTML=`<button class="btn" id="co">Se connecter avec Google</button>`;document.getElementById("co").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider())}
+    if(user){
+      z.innerHTML=`<h2>👤 Mon compte</h2><p>Connecté avec<br><b>${user.email}</b></p><p>⭐ Tes favoris sont sauvegardés sur tous tes appareils.</p><button class="btn" id="deco">Se déconnecter</button>`;
+      document.getElementById("deco").onclick=()=>A.signOut(auth);
+    }else{
+      z.innerHTML=`<h2>👤 Compte</h2><p>Crée un compte pour retrouver tes favoris sur ordinateur et téléphone.</p>
+      <input type="email" id="cmail" placeholder="Adresse e-mail" autocomplete="email">
+      <input type="password" id="cmdp" placeholder="Mot de passe (6 caractères min.)" autocomplete="current-password">
+      <div id="cmsg" class="msg"></div>
+      <button class="btn rouge" id="bco">Se connecter</button>
+      <button class="btn" id="bcr">Créer un compte</button>
+      <button class="lien" id="boubli">Mot de passe oublié ?</button>
+      <div class="ou">— ou —</div>
+      <button class="btn" id="bgo">Continuer avec Google</button>`;
+      const mail=()=>document.getElementById("cmail").value.trim();
+      const mdp=()=>document.getElementById("cmdp").value;
+      document.getElementById("bco").onclick=()=>{msg("");A.signInWithEmailAndPassword(auth,mail(),mdp()).catch(err)};
+      document.getElementById("bcr").onclick=()=>{msg("");A.createUserWithEmailAndPassword(auth,mail(),mdp()).catch(err)};
+      document.getElementById("boubli").onclick=()=>{
+        if(!mail())return msg("Écris ton e-mail d'abord.");
+        A.sendPasswordResetEmail(auth,mail()).then(()=>msg("📧 E-mail envoyé ! Regarde ta boîte (et les spams).",1)).catch(err);
+      };
+      document.getElementById("bgo").onclick=()=>{msg("");A.signInWithPopup(auth,new A.GoogleAuthProvider()).catch(err)};
+      document.getElementById("cmdp").onkeydown=e=>{if(e.key=="Enter")document.getElementById("bco").click()};
+    }
   };
-  onAuthStateChanged(auth,async u=>{
+  A.onAuthStateChanged(auth,async u=>{
     user=u;
-    if(u){const s=await getDoc(doc(db,"users",u.uid));const f=s.exists()?s.data().favs||[]:[];const m=[...new Set([...f,...JSON.parse(localStorage.getItem("pkm-fav")||"[]")])];setFavs(m);window.syncFavs(m)}
+    oc.textContent=u?"👤 Mon compte":"👤 Compte";
+    if(u){
+      try{
+        const s=await getDoc(doc(db,"users",u.uid));
+        const f=s.exists()?s.data().favs||[]:[];
+        const m=[...new Set([...f,...JSON.parse(localStorage.getItem("pkm-fav")||"[]")])];
+        setFavs(m);window.syncFavs(m);
+      }catch(e){}
+    }
     window.afficherCompte();
   });
 }
