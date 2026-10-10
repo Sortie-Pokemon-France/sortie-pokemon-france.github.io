@@ -464,12 +464,16 @@ if(FIREBASE_CONFIG.apiKey){
     user=u;
     oc.textContent=u?"👤 Mon compte":"👤 Compte";
     if(u){
+      localStorage.setItem("pkm-connecte","1");
       try{
         const s=await getDoc(doc(db,"users",u.uid));
         const f=s.exists()?s.data().favs||[]:[];
         const m=[...new Set([...f,...JSON.parse(localStorage.getItem("pkm-fav")||"[]")])];
         setFavs(m);window.syncFavs(m);
       }catch(e){}
+    }else if(localStorage.getItem("pkm-connecte")){
+      localStorage.removeItem("pkm-connecte");
+      setFavs([]);
     }
     window.afficherCompte();
   });
