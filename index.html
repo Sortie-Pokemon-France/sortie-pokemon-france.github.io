@@ -81,7 +81,13 @@ summary{cursor:pointer;font-weight:bold}
 .ou{color:#999;margin:10px 0;font-size:13px}
 .msg{color:#e3350d;font-size:14px;min-height:18px;margin:4px 0}
 .msg.bon{color:#1a7a1a}
-footer{text-align:center;font-size:12px;color:#888;padding:20px}
+#cookies{display:none;position:fixed;left:0;right:0;bottom:0;background:#222;color:#fff;padding:12px;z-index:90;text-align:center;font-size:14px;box-shadow:0 -2px 8px rgba(0,0,0,.3)}
+#cookies.on{display:block}
+#cookies button{margin:8px 4px 0;padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;font-size:14px;min-width:110px}
+#cookies .oui{background:#ffcb05;color:#222}
+#cookies .non{background:#555;color:#fff}
+footer{text-align:center;font-size:12px;color:#888;padding:20px 20px 30px}
+footer .lien{font-size:12px;color:#888}
 </style>
 </head>
 <body>
@@ -124,9 +130,42 @@ footer{text-align:center;font-size:12px;color:#888;padding:20px}
   <div id="zn"></div>
 </div>
 
-<footer>Site de fan non officiel. Prix conseillés indicatifs, à vérifier en magasin.</footer>
+<div id="cookies">
+  🍪 Ce site utilise Google Analytics pour compter les visites (statistiques anonymes). Tu acceptes ?
+  <br>
+  <button class="oui" onclick="choixCookies(1)">Accepter</button>
+  <button class="non" onclick="choixCookies(0)">Refuser</button>
+</div>
+
+<footer>Site de fan non officiel. Prix conseillés indicatifs, à vérifier en magasin.<br><button class="lien" onclick="document.getElementById('cookies').classList.add('on')">🍪 Gérer les cookies</button></footer>
 
 <script>
+/* ---------- Google Analytics (seulement si accepté) ---------- */
+const GA_ID="G-TH3HFFVZF2";
+function chargerGA(){
+  if(window.gaCharge)return;window.gaCharge=1;
+  const s=document.createElement("script");s.async=true;
+  s.src="https://www.googletagmanager.com/gtag/js?id="+GA_ID;
+  document.head.appendChild(s);
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=function(){dataLayer.push(arguments)};
+  gtag("js",new Date());
+  gtag("config",GA_ID,{anonymize_ip:true});
+}
+function choixCookies(ok){
+  const avant=localStorage.getItem("pkm-cookies");
+  localStorage.setItem("pkm-cookies",ok?"oui":"non");
+  document.getElementById("cookies").classList.remove("on");
+  if(ok)chargerGA();
+  else if(avant=="oui")location.reload();
+}
+function ga(nom,p){if(window.gtag)gtag("event",nom,p||{})}
+(function(){
+  const c=localStorage.getItem("pkm-cookies");
+  if(c=="oui")chargerGA();
+  else if(!c)document.getElementById("cookies").classList.add("on");
+})();
+
 const MISE_A_JOUR = "10 octobre 2026";
 
 const MAGASINS = {
@@ -243,6 +282,7 @@ document.addEventListener("click",e=>{
   const s=e.target.closest(".galerie .sl");if(!s)return;
   const g=s.parentNode;
   ouvrir([...g.querySelectorAll("img")].map(i=>i.getAttribute("src")),[...g.children].indexOf(s));
+  ga("photo_zoom",{produit:g.closest(".photo").dataset.id});
 });
 document.addEventListener("keydown",e=>{
   if(!document.getElementById("zoom").classList.contains("on"))return;
@@ -255,7 +295,7 @@ document.addEventListener("keydown",e=>{
 function lienMag(p){return k=>{
   const m=MAGASINS[k];if(!m)return"";
   const url=m.site?`https://www.google.com/search?q=${enc(p.recherche+" site:"+m.site)}`:m.url;
-  return `<a target="_blank" href="${url}">${m.nom}</a>`;
+  return `<a target="_blank" href="${url}" onclick="ga('clic_magasin',{magasin:'${k}',produit:'${p.id}'})">${m.nom}</a>`;
 }}
 function carte(p){
   const j=jours(p.date),fav=favs.includes(p.id);
@@ -275,9 +315,11 @@ function carte(p){
 
 /* ---------- Actions ---------- */
 function suivre(id){
-  favs=favs.includes(id)?favs.filter(x=>x!=id):[...favs,id];
+  const ajoute=!favs.includes(id);
+  favs=ajoute?[...favs,id]:favs.filter(x=>x!=id);
   localStorage.setItem("pkm-fav",JSON.stringify(favs));
   if(window.syncFavs)window.syncFavs(favs);
+  if(ajoute)ga("suivre",{produit:id});
   rendre();
 }
 function setFavs(a){favs=a;localStorage.setItem("pkm-fav",JSON.stringify(favs));rendre()}
@@ -289,6 +331,7 @@ function agenda(id){
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
   a.download=p.id+".ics";a.click();
+  ga("agenda",{produit:id});
 }
 
 /* ---------- Affichage ---------- */
@@ -347,6 +390,7 @@ Object.entries(MAGASINS).forEach(([k,m])=>fMag.innerHTML+=`<option value="${k}">
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");onglet=b.dataset.o;rendre();
+  ga("onglet",{nom:onglet});
 });
 rendre();
 </script>
@@ -406,13 +450,13 @@ if(FIREBASE_CONFIG.apiKey){
       <button class="btn" id="bgo">Continuer avec Google</button>`;
       const mail=()=>document.getElementById("cmail").value.trim();
       const mdp=()=>document.getElementById("cmdp").value;
-      document.getElementById("bco").onclick=()=>{msg("");A.signInWithEmailAndPassword(auth,mail(),mdp()).catch(err)};
-      document.getElementById("bcr").onclick=()=>{msg("");A.createUserWithEmailAndPassword(auth,mail(),mdp()).catch(err)};
+      document.getElementById("bco").onclick=()=>{msg("");A.signInWithEmailAndPassword(auth,mail(),mdp()).then(()=>ga("login",{method:"email"})).catch(err)};
+      document.getElementById("bcr").onclick=()=>{msg("");A.createUserWithEmailAndPassword(auth,mail(),mdp()).then(()=>ga("sign_up",{method:"email"})).catch(err)};
       document.getElementById("boubli").onclick=()=>{
         if(!mail())return msg("Écris ton e-mail d'abord.");
         A.sendPasswordResetEmail(auth,mail()).then(()=>msg("📧 E-mail envoyé ! Regarde ta boîte (et les spams).",1)).catch(err);
       };
-      document.getElementById("bgo").onclick=()=>{msg("");A.signInWithPopup(auth,new A.GoogleAuthProvider()).catch(err)};
+      document.getElementById("bgo").onclick=()=>{msg("");A.signInWithPopup(auth,new A.GoogleAuthProvider()).then(()=>ga("login",{method:"google"})).catch(err)};
       document.getElementById("cmdp").onkeydown=e=>{if(e.key=="Enter")document.getElementById("bco").click()};
     }
   };
