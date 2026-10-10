@@ -23,21 +23,30 @@ h2{font-size:19px;margin:18px 0 10px}
 h2.mois{text-transform:capitalize;color:#2a75bb;border-bottom:2px solid #2a75bb;padding-bottom:4px}
 .grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .carte{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;flex-direction:column}
-.corps{padding:10px 12px 12px}
+.corps{padding:10px 12px 12px;display:flex;flex-direction:column;flex:1}
 .photo{position:relative;height:200px;background:#fff;border-bottom:1px solid #eee}
-a.ph{height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;color:#2a75bb;background:#fafafa}
-a.ph span{font-size:60px}
-a.ph small{margin-top:6px;font-weight:bold}
-.photo.aphoto a.ph{display:none}
+.ph{height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#999;background:#fafafa}
+.ph span{font-size:60px}
+.ph small{margin-top:6px}
+.photo.aphoto .ph{display:none}
 .photo:not(.aphoto) .galerie{display:none}
 .galerie{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:200px;scrollbar-width:none}
 .galerie::-webkit-scrollbar{display:none}
-.galerie .sl{flex:0 0 100%;scroll-snap-align:start;height:200px;display:flex;align-items:center;justify-content:center}
+.galerie .sl{flex:0 0 100%;scroll-snap-align:start;height:200px;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
 .galerie img{max-width:100%;max-height:200px;object-fit:contain;pointer-events:none;user-select:none}
 .fl{position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;padding:0 4px;font-size:24px;font-weight:bold;color:#333;text-shadow:0 0 3px #fff,0 0 3px #fff;cursor:pointer;z-index:5;display:none}
 .fl:hover{color:#e3350d}
 .fl.g{left:2px}.fl.d{right:2px}
 .photo.multi .fl{display:block}
+#zoom{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center}
+#zoom.on{display:flex}
+#zoom img{max-width:88vw;max-height:85vh;object-fit:contain;background:#fff;border-radius:8px}
+.zx{position:absolute;top:10px;right:14px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer}
+.zfl{position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:40px;cursor:pointer;display:none;padding:0 10px}
+.zfl:hover{color:#ffcb05}
+#zoom.multi .zfl{display:block}
+.zfl.g{left:6px}.zfl.d{right:6px}
+#zn{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:14px}
 .badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .b{font-size:11px;font-weight:bold;padding:3px 7px;border-radius:10px;background:#eee}
 .b.neuf{background:#e3350d;color:#fff}
@@ -90,7 +99,6 @@ footer{text-align:center;font-size:12px;color:#888;padding:20px}
       <option value="extension">Extension</option>
       <option value="coffret">Coffret</option>
       <option value="deck">Deck</option>
-      <option value="evenement">Événement</option>
       <option value="rumeur">Rumeur</option>
     </select>
     <select id="fMag"><option value="">Tous les magasins</option></select>
@@ -99,10 +107,18 @@ footer{text-align:center;font-size:12px;color:#888;padding:20px}
   <div id="contenu"></div>
 </main>
 
+<div id="zoom" onclick="if(event.target==this)fermer()">
+  <button class="zx" onclick="fermer()">✕</button>
+  <button class="zfl g" onclick="zf(-1)">❮</button>
+  <img alt="">
+  <button class="zfl d" onclick="zf(1)">❯</button>
+  <div id="zn"></div>
+</div>
+
 <footer>Site de fan non officiel. Prix conseillés indicatifs, à vérifier en magasin.</footer>
 
 <script>
-const MISE_A_JOUR = "9 octobre 2026";
+const MISE_A_JOUR = "10 octobre 2026";
 
 const MAGASINS = {
   fnac:{nom:"Fnac",site:"fnac.com",url:"https://www.fnac.com",info:"Magasins et site, précommandes fréquentes."},
@@ -118,7 +134,7 @@ const MAGASINS = {
   pokemoncenter:{nom:"Pokémon Center",site:"pokemoncenter.com",url:"https://www.pokemoncenter.com/fr-fr",info:"Boutique officielle."},
   philibert:{nom:"Philibert",site:"philibertnet.com",url:"https://www.philibertnet.com",info:"Spécialiste jeux, displays."},
   ultrajeux:{nom:"UltraJeux",site:"ultrajeux.com",url:"https://www.ultrajeux.com",info:"Spécialiste cartes à jouer."},
-  boutiques:{nom:"Boutiques spécialisées",site:"",url:"https://www.google.com/maps/search/boutique+cartes+pokemon",info:"Boutiques de jeux près de chez toi (avant-premières)."}
+  boutiques:{nom:"Boutiques spécialisées",site:"",url:"https://www.google.com/maps/search/boutique+cartes+pokemon",info:"Boutiques de jeux près de chez toi."}
 };
 const GRAND_PUBLIC=["fnac","cultura","micromania","leclerc","carrefour","auchan","kingjouet","joueclub","amazon","cdiscount"];
 const DISPLAYS=["philibert","ultrajeux","boutiques","micromania","cultura","amazon"];
@@ -127,7 +143,6 @@ const PREMIUM=["pokemoncenter","fnac","micromania","cultura","philibert","ultraj
 const PRODUITS = [
 {id:"pokebox30",nom:"Pokébox 30e anniversaire",recherche:"pokébox 30e anniversaire pokemon fr",serie:"30e anniversaire",type:"coffret",date:"2026-10-16",prix:"25,99",prixTbc:false,statut:"confirme",ajout:"2026-09-25",desc:"Pokébox de la vague 30e anniversaire avec boosters et carte promo.",magasins:GRAND_PUBLIC},
 {id:"classeur30",nom:"Classeur collector 30e anniversaire",recherche:"classeur collector 30e anniversaire pokemon",serie:"30e anniversaire",type:"coffret",date:"2026-10-23",prix:"45,99",prixTbc:false,statut:"annonce",ajout:"2026-09-25",desc:"Classeur avec boosters. La date pourrait passer au 4 décembre.",magasins:GRAND_PUBLIC},
-{id:"avp-me06",nom:"Avant-premières Méga-Évolution 06",recherche:"avant-première pokemon ME06 kit",serie:"Méga-Évolution",type:"evenement",date:"2026-10-24",fin:"2026-11-01",dateTxt:"du 24 octobre au 1er novembre 2026",prix:"30",prixTbc:true,statut:"confirme",ajout:"2026-10-01",desc:"Tournois d'avant-première en boutique : joue et repars avec des boosters de la nouvelle extension.",magasins:["boutiques","ultrajeux","philibert"]},
 {id:"deck-mentali",nom:"Deck Mentali-ex",recherche:"deck mentali ex pokemon jcc",serie:"Méga-Évolution",type:"deck",date:"2026-10-30",prix:"24,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Deck prêt à jouer autour de Mentali-ex.",magasins:GRAND_PUBLIC},
 {id:"deck-noctali",nom:"Deck Noctali-ex",recherche:"deck noctali ex pokemon jcc",serie:"Méga-Évolution",type:"deck",date:"2026-10-30",prix:"24,99",prixTbc:false,statut:"confirme",ajout:"2026-10-01",desc:"Deck prêt à jouer autour de Noctali-ex.",magasins:GRAND_PUBLIC},
 {id:"creation-deck",nom:"Coffret Création de deck",recherche:"coffret création de deck pokemon",serie:"Méga-Évolution",type:"coffret",date:"2026-10-31",dateTxt:"fin octobre 2026",prix:"",prixTbc:true,statut:"annonce",ajout:"2026-10-01",desc:"Coffret pour construire ton propre deck.",magasins:GRAND_PUBLIC},
@@ -149,9 +164,9 @@ const PRODUITS = [
 {id:"ex-star",nom:"Extension spéciale (rumeur)",recherche:"pokemon jcc rumeur 2027 extension",serie:"?",type:"rumeur",date:"2027-04-01",dateTxt:"printemps 2027 (rumeur)",prix:"",prixTbc:true,statut:"rumeur",ajout:"2026-10-09",desc:"Rumeur non confirmée par Pokémon.",magasins:GRAND_PUBLIC}
 ];
 
-const TYPES={extension:"Extension",coffret:"Coffret",deck:"Deck",evenement:"Événement",rumeur:"Rumeur"};
-const EMOJI={extension:"🃏",coffret:"🎁",deck:"⚔️",evenement:"🏆",rumeur:"❓"};
-const STATUTS={confirme:"Confirmé",annonce:"Annoncé",rumeur:"Rumeur"};
+const TYPES={extension:"Extension",coffret:"Coffret",deck:"Deck",rumeur:"Rumeur"};
+const EMOJI={extension:"🃏",coffret:"🎁",deck:"⚔️",rumeur:"❓"};
+const STATUTS={confirme:"Confirmé",annonce:"À confirmer",rumeur:"Rumeur"};
 
 let favs=JSON.parse(localStorage.getItem("pkm-fav")||"[]");
 let onglet="cal";
@@ -159,7 +174,7 @@ const auj=new Date();auj.setHours(0,0,0,0);
 
 function jours(d){return Math.round((new Date(d+"T00:00:00")-auj)/864e5)}
 function chrono(a,b){return a.date.localeCompare(b.date)}
-function estNeuf(p){return p.ajout && (auj-new Date(p.ajout+"T00:00:00"))/864e5<14}
+function estNeuf(p){return p.ajout && (auj-new Date(p.ajout+"T00:00:00"))/864e5<7}
 function passe(p){return jours(p.fin||p.date)<0}
 function dateTxt(p){return p.dateTxt||new Date(p.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
 const enc=encodeURIComponent;
@@ -182,9 +197,8 @@ function trouver(id){
   return PH[id];
 }
 function photo(p){
-  const g="https://www.google.com/search?tbm=isch&q="+enc(p.recherche);
   return `<div class="photo" data-id="${p.id}">
-    <a class="ph" target="_blank" href="${g}"><span>${EMOJI[p.type]}</span><small>👆 Voir à quoi ça ressemble</small></a>
+    <div class="ph"><span>${EMOJI[p.type]}</span><small>Photo bientôt</small></div>
     <div class="galerie"></div>
     <button type="button" class="fl g" onclick="fleche(this,-1)">❮</button>
     <button type="button" class="fl d" onclick="fleche(this,1)">❯</button>
@@ -205,6 +219,29 @@ function fleche(b,d){
   g.scrollTo({left:i*w,behavior:"smooth"});
 }
 
+/* ---------- Photo en grand ---------- */
+let Z={l:[],i:0};
+function ouvrir(l,i){Z={l,i};document.getElementById("zoom").classList.add("on");document.body.style.overflow="hidden";montrer()}
+function montrer(){
+  const z=document.getElementById("zoom");
+  z.querySelector("img").src=Z.l[Z.i];
+  z.classList.toggle("multi",Z.l.length>1);
+  document.getElementById("zn").textContent=Z.l.length>1?(Z.i+1)+" / "+Z.l.length:"";
+}
+function zf(d){Z.i=(Z.i+d+Z.l.length)%Z.l.length;montrer()}
+function fermer(){document.getElementById("zoom").classList.remove("on");document.body.style.overflow=""}
+document.addEventListener("click",e=>{
+  const s=e.target.closest(".galerie .sl");if(!s)return;
+  const g=s.parentNode;
+  ouvrir([...g.querySelectorAll("img")].map(i=>i.getAttribute("src")),[...g.children].indexOf(s));
+});
+document.addEventListener("keydown",e=>{
+  if(!document.getElementById("zoom").classList.contains("on"))return;
+  if(e.key=="Escape")fermer();
+  if(e.key=="ArrowLeft")zf(-1);
+  if(e.key=="ArrowRight")zf(1);
+});
+
 /* ---------- Carte ---------- */
 function lienMag(p){return k=>{
   const m=MAGASINS[k];if(!m)return"";
@@ -214,7 +251,7 @@ function lienMag(p){return k=>{
 function carte(p){
   const j=jours(p.date),fav=favs.includes(p.id);
   return `<div class="carte">${photo(p)}<div class="corps">
-  <div class="badges">${estNeuf(p)?'<span class="b neuf">NOUVEAU</span>':''}<span class="b t">${TYPES[p.type]}</span><span class="b s-${p.statut}">${STATUTS[p.statut]}</span>${j>=0&&p.type!="rumeur"?`<span class="b j">${j==0?"Aujourd'hui !":"J-"+j}</span>`:''}</div>
+  <div class="badges">${estNeuf(p)?'<span class="b neuf">🆕 Annoncé</span>':''}<span class="b t">${TYPES[p.type]}</span><span class="b s-${p.statut}">${STATUTS[p.statut]}</span>${j>=0&&p.type!="rumeur"?`<span class="b j">${j==0?"Aujourd'hui !":"J-"+j}</span>`:''}</div>
   <h3>${p.nom}</h3>
   <div class="date">📅 ${dateTxt(p)}</div>
   <div class="serie">${p.serie}</div>
@@ -222,7 +259,6 @@ function carte(p){
   <p class="desc">${p.desc}</p>
   <details><summary>🛒 Où l'acheter</summary><div class="mags">${p.magasins.map(lienMag(p)).join("")}</div></details>
   <div class="btns">
-    <a class="btn" target="_blank" href="https://www.google.com/search?tbm=isch&q=${enc(p.recherche)}">🖼️ Photos</a>
     <button class="btn" onclick="agenda('${p.id}')">📆 Agenda</button>
     <button class="btn ${fav?"on":""}" onclick="suivre('${p.id}')">${fav?"★ Suivi":"☆ Suivre"}</button>
   </div></div></div>`;
@@ -262,9 +298,6 @@ function rendre(){
     const l=filtrer(PRODUITS).sort(chrono);
     if(!l.length){c.innerHTML='<div class="vide">Aucun produit trouvé.</div>';return}
     let h="";
-    const n=l.filter(estNeuf);
-    if(n.length)h+=`<h2>🆕 Nouveautés (par date de sortie)</h2>${grille(n)}`;
-    h+=`<h2>📅 Toutes les sorties</h2>`;
     const mois={};
     l.forEach(p=>{const k=p.date.slice(0,7);(mois[k]=mois[k]||[]).push(p)});
     Object.keys(mois).sort().forEach(k=>{
